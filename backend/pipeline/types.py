@@ -82,10 +82,31 @@ class SectionProfile:
 
 
 @dataclass
+class SongFitScore:
+    total: float
+    musical_compatibility: float
+    realism: float
+    emotional_match: float
+    mix_quality: float
+    ranking_reason: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "total": round(self.total, 2),
+            "musical_compatibility": round(self.musical_compatibility, 2),
+            "realism": round(self.realism, 2),
+            "emotional_match": round(self.emotional_match, 2),
+            "mix_quality": round(self.mix_quality, 2),
+            "ranking_reason": self.ranking_reason,
+        }
+
+
+@dataclass
 class MixedVariation:
     label: str
     output_path: Path
     mix_profile: dict[str, Any]
+    song_fit: SongFitScore | None = None
 
 
 @dataclass
@@ -95,3 +116,8 @@ class PipelineResult:
     encoded: PerformanceEncoding
     transformed_vocal_path: Path
     variations: list[MixedVariation]
+    best_variation: MixedVariation | None = None
+
+    @property
+    def selected_variation_label(self) -> str | None:
+        return self.best_variation.label if self.best_variation else None

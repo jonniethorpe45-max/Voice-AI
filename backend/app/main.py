@@ -90,6 +90,7 @@ async def upload(
             "input": {"vocal_path": str(vocal_path), "song_path": str(song_path) if song_path else None},
             "analysis": {},
             "results": [],
+            "selected_variation_label": None,
             "error": None,
         },
     )
@@ -147,14 +148,17 @@ async def results(job_id: str) -> JobResultResponse:
         VariationResult(
             label=item["label"],
             media_url=item["media_url"],
+            song_fit_score=item.get("song_fit_score", {}),
+            rank=int(item.get("rank", idx + 1)),
             metadata=item.get("metadata", {}),
         )
-        for item in state.get("results", [])
+        for idx, item in enumerate(state.get("results", []))
     ]
     return JobResultResponse(
         job_id=job_id,
         status=state["status"],
         message=state.get("message", ""),
+        selected_variation_label=state.get("selected_variation_label"),
         analysis=state.get("analysis", {}),
         variations=variations,
     )

@@ -49,9 +49,20 @@ class JobStatusResponse(BaseModel):
     error: str | None = None
 
 
+class SongFitScoreResponse(BaseModel):
+    total: float = Field(default=0.0, ge=0.0, le=100.0)
+    musical_compatibility: float = Field(default=0.0, ge=0.0, le=100.0)
+    realism: float = Field(default=0.0, ge=0.0, le=100.0)
+    emotional_match: float = Field(default=0.0, ge=0.0, le=100.0)
+    mix_quality: float = Field(default=0.0, ge=0.0, le=100.0)
+    ranking_reason: str = ""
+
+
 class VariationResult(BaseModel):
     label: str
     media_url: str
+    song_fit_score: float = Field(default=0.0, ge=0.0, le=100.0)
+    rank: int = Field(default=0, ge=0)
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -59,5 +70,6 @@ class JobResultResponse(BaseModel):
     job_id: str
     status: JobState
     message: str = ""
+    selected_variation_label: str | None = None
     variations: list[VariationResult] = Field(default_factory=list)
     analysis: dict[str, Any] = Field(default_factory=dict)

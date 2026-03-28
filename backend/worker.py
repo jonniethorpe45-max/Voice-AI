@@ -61,16 +61,27 @@ def main() -> None:
                 preferred_variations=payload.get("preferred_variations", []),
             )
 
-            outputs = []
-            for variation in result.variations:
+            outputs: list[dict] = []
+            for index, variation in enumerate(result.variations, start=1):
                 rel = variation.output_path.relative_to(settings.storage_root).as_posix()
+                metadata = {
+                    **variation.mix_profile,
+                    "song_fit_score": variation.song_fit.to_dict() if variation.song_fit else {},
+                }
                 outputs.append(
                     {
                         "label": variation.label,
                         "media_url": f"/media/{rel}",
-                        "metadata": variation.mix_profile,
+                        "song_fit_score": variation.song_fit.total if variation.song_fit else 0.0,
+                        "rank": index,
+                        "metadata": metadata,
                     }
                 )
+
+            selected = next(
+                (item for item in outputs if item["label"] == result.selected_variation_label),
+                outputs[0] if outputs else None,
+            )
 
             set_job_data(
                 job_id,
@@ -81,6 +92,8 @@ def main() -> None:
                     "message": "Vocal transformation complete.",
                     "analysis": result.analysis.to_summary(),
                     "results": outputs,
+                    "selected_variation_label": result.selected_variation_label,
+                    "selected_variation": selected,
                     "error": None,
                 },
             )

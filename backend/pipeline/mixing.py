@@ -102,7 +102,6 @@ class MixingEngine:
                 filter_chain,
                 str(out_path),
             ]
-
         try:
             subprocess.run(cmd, check=True, capture_output=True)
         except subprocess.CalledProcessError:

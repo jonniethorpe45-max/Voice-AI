@@ -18,6 +18,7 @@ Production-ready MVP for a **song-aware vocal resynthesis app** that transforms 
   - Soft musical pitch guidance (not hard auto-tune)
   - Song-aware section adaptation
   - Mixing + 5 output variations
+  - Song Fit Score ranking + automatic best variation selection
 - Dockerized deployment for API + worker + Redis
 - Flutter mobile/web frontend scaffold with required screens
 - Sample audio generation utility and API docs

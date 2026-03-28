@@ -72,7 +72,7 @@ Track job progress and errors.
 
 ### `GET /results/{job_id}`
 
-Retrieve generated vocal variations and analysis summary.
+Retrieve generated variations ranked by Song Fit Score and the auto-selected best output.
 
 **Response**
 ```json
@@ -80,6 +80,7 @@ Retrieve generated vocal variations and analysis summary.
   "job_id": "uuid",
   "status": "completed",
   "message": "Vocal transformation complete.",
+  "selected_variation_label": "Studio Clean",
   "analysis": {
     "key": "A",
     "scale": "major"
@@ -88,8 +89,18 @@ Retrieve generated vocal variations and analysis summary.
     {
       "label": "Studio Clean",
       "media_url": "/media/outputs/uuid/mixed/studio_clean.wav",
+      "song_fit_score": 88.3,
+      "rank": 1,
       "metadata": {
-        "compression_ratio": 2.2
+        "compression_ratio": 2.2,
+        "song_fit": {
+          "total": 88.3,
+          "musical_compatibility": 86.2,
+          "realism": 90.1,
+          "emotional_match": 84.0,
+          "mix_quality": 90.2,
+          "ranking_reason": "Best aggregate across compatibility, realism, emotion, and mix."
+        }
       }
     }
   ]

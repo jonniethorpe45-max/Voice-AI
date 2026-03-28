@@ -5,6 +5,7 @@ from pathlib import Path
 from .analysis import AudioAnalyzer
 from .mixing import MixingEngine
 from .performance import PerformanceEncoder
+from .scoring import SongFitScorer
 from .separation import SourceSeparator
 from .song_aware import SongAwareAdapter
 from .svc import SVCEngine
@@ -19,6 +20,7 @@ class VocalTransformationEngine:
         self.song_aware = SongAwareAdapter()
         self.svc = SVCEngine()
         self.mixer = MixingEngine()
+        self.scorer = SongFitScorer()
 
     def run(
         self,
@@ -49,10 +51,12 @@ class VocalTransformationEngine:
             output_dir=output_dir / "mixed",
             preferred_variations=preferred_variations,
         )
+        scored_variations, best_variation = self.scorer.rank(variations=variations, analysis=analysis)
         return PipelineResult(
             separated=separated,
             analysis=analysis,
             encoded=encoded,
             transformed_vocal_path=transformed_path,
-            variations=variations,
+            variations=scored_variations,
+            best_variation=best_variation,
         )
