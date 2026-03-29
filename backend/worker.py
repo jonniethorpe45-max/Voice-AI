@@ -1,22 +1,32 @@
 from __future__ import annotations
 
 import time
-from pathlib import Path
 
 from app.config import settings
-from app.queue import get_job_data, pop_job, set_job_data, update_job_data
-from app.schemas import StyleControls
-from pipeline.engine import VocalTransformationEngine
-from pipeline.types import EnhancementControls
+from app.queue import (
+    QueueName,
+    enqueue_job,
+    increment_attempt,
+    move_to_dead_letter,
+    pop_job,
+    should_retry,
+    update_job_data,
+)
+from workers.job_runner import process_payload
 
 
-def main() -> None:
+def _resolve_capability(capability_override: str | None = None) -> QueueName:
+    capability = (capability_override or settings.worker_capability).lower().strip()
+    return QueueName.GPU if capability == "gpu" else QueueName.CPU
+
+
+def main(capability_override: str | None = None) -> None:
     settings.ensure_storage()
-    engine = VocalTransformationEngine()
-    print("VocalFit worker started")
+    queue = _resolve_capability(capability_override)
+    print(f"VocalFit worker started (capability={queue.value})")
 
     while True:
-        payload = pop_job(block_seconds=2)
+        payload = pop_job(queue=queue)
         if payload is None:
             time.sleep(0.2)
             continue
@@ -25,85 +35,31 @@ def main() -> None:
         if not job_id:
             continue
 
-        state = get_job_data(job_id)
-        if not state:
-            continue
-
         try:
-            update_job_data(
-                job_id,
-                status="running",
-                progress=20,
-                message="Running analysis and transformation pipeline...",
-                error=None,
-            )
-
-            vocal_path = Path(state["input"]["vocal_path"])
-            song_path_value = state["input"].get("song_path")
-            song_path = Path(song_path_value) if song_path_value else None
-
-            controls = StyleControls(**payload.get("style_controls", {}))
-            enhancement = EnhancementControls(
-                warmth=controls.warmth,
-                brightness=controls.brightness,
-                power=controls.power,
-                breathiness=controls.breathiness,
-                smoothness=controls.smoothness,
-                emotion_intensity=controls.emotion_intensity,
-                soft_pitch_strength=controls.soft_pitch_strength,
-            )
-
-            result = engine.run(
-                vocal_path=vocal_path,
-                song_path=song_path,
-                output_dir=settings.output_dir / job_id,
-                controls=enhancement,
-                preferred_variations=payload.get("preferred_variations", []),
-            )
-
-            outputs: list[dict] = []
-            for index, variation in enumerate(result.variations, start=1):
-                rel = variation.output_path.relative_to(settings.storage_root).as_posix()
-                metadata = {
-                    **variation.mix_profile,
-                    "song_fit_score": variation.song_fit.to_dict() if variation.song_fit else {},
-                }
-                outputs.append(
-                    {
-                        "label": variation.label,
-                        "media_url": f"/media/{rel}",
-                        "song_fit_score": variation.song_fit.total if variation.song_fit else 0.0,
-                        "rank": index,
-                        "metadata": metadata,
-                    }
-                )
-
-            selected = next(
-                (item for item in outputs if item["label"] == result.selected_variation_label),
-                outputs[0] if outputs else None,
-            )
-
-            set_job_data(
-                job_id,
-                {
-                    **state,
-                    "status": "completed",
-                    "progress": 100,
-                    "message": "Vocal transformation complete.",
-                    "analysis": result.analysis.to_summary(),
-                    "results": outputs,
-                    "selected_variation_label": result.selected_variation_label,
-                    "selected_variation": selected,
-                    "error": None,
-                },
-            )
+            process_payload(payload=payload, capability=queue)
         except Exception as exc:  # pragma: no cover
-            update_job_data(
-                job_id,
-                status="failed",
-                message=f"{type(exc).__name__}: {exc}",
-                error=f"{type(exc).__name__}: {exc}",
-            )
+            reason = f"{type(exc).__name__}: {exc}"
+            attempted_payload = increment_attempt(payload)
+
+            if should_retry(attempted_payload):
+                enqueue_job(attempted_payload, queue=queue)
+                update_job_data(
+                    job_id,
+                    status="queued",
+                    message=f"Retrying job ({attempted_payload['attempt']}/{settings.max_job_retries}): {reason}",
+                    retry_count=int(attempted_payload["attempt"]),
+                    error=reason,
+                )
+            else:
+                move_to_dead_letter(attempted_payload, reason=reason)
+                update_job_data(
+                    job_id,
+                    status="failed",
+                    message=reason,
+                    error=reason,
+                    retry_count=int(attempted_payload["attempt"]),
+                    dead_lettered=True,
+                )
 
 
 if __name__ == "__main__":

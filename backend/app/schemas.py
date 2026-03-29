@@ -6,6 +6,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 JobState = Literal["uploaded", "queued", "running", "completed", "failed", "completed_with_warnings"]
+QueueTarget = Literal["cpu", "gpu"]
 
 
 def utc_now() -> datetime:
@@ -32,12 +33,18 @@ class ProcessRequest(BaseModel):
     job_id: str = Field(..., description="Job ID returned by /upload")
     style_controls: StyleControls = Field(default_factory=StyleControls)
     preferred_variations: list[str] = Field(default_factory=list)
+    force_queue: QueueTarget | None = Field(
+        default=None,
+        description="Optional queue override (cpu/gpu) for multi-tenant routing policies.",
+    )
 
 
 class ProcessResponse(BaseModel):
     job_id: str
     status: JobState
     queued_at: datetime = Field(default_factory=utc_now)
+    queue_target: QueueTarget
+    requires_gpu: bool
 
 
 class JobStatusResponse(BaseModel):
@@ -47,15 +54,10 @@ class JobStatusResponse(BaseModel):
     message: str = ""
     updated_at: datetime = Field(default_factory=utc_now)
     error: str | None = None
-
-
-class SongFitScoreResponse(BaseModel):
-    total: float = Field(default=0.0, ge=0.0, le=100.0)
-    musical_compatibility: float = Field(default=0.0, ge=0.0, le=100.0)
-    realism: float = Field(default=0.0, ge=0.0, le=100.0)
-    emotional_match: float = Field(default=0.0, ge=0.0, le=100.0)
-    mix_quality: float = Field(default=0.0, ge=0.0, le=100.0)
-    ranking_reason: str = ""
+    queue_target: QueueTarget | None = None
+    worker_capability: QueueTarget | None = None
+    retry_count: int = 0
+    dead_lettered: bool = False
 
 
 class VariationResult(BaseModel):
@@ -73,3 +75,5 @@ class JobResultResponse(BaseModel):
     selected_variation_label: str | None = None
     variations: list[VariationResult] = Field(default_factory=list)
     analysis: dict[str, Any] = Field(default_factory=dict)
+    queue_target: QueueTarget | None = None
+    worker_capability: QueueTarget | None = None

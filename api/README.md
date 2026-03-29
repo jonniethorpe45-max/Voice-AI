@@ -41,7 +41,8 @@ Queue a transformation job.
   "preferred_variations": [
     "Studio Clean",
     "Power Vocal"
-  ]
+  ],
+  "force_queue": "gpu"
 }
 ```
 
@@ -50,7 +51,9 @@ Queue a transformation job.
 {
   "job_id": "uuid",
   "status": "queued",
-  "queued_at": "2026-03-28T12:00:05.000000+00:00"
+  "queued_at": "2026-03-28T12:00:05.000000+00:00",
+  "queue_target": "gpu",
+  "requires_gpu": true
 }
 ```
 
@@ -66,7 +69,11 @@ Track job progress and errors.
   "progress": 45,
   "message": "Running analysis and transformation pipeline...",
   "updated_at": "2026-03-28T12:00:10.000000+00:00",
-  "error": null
+  "error": null,
+  "queue_target": "gpu",
+  "worker_capability": "gpu",
+  "retry_count": 0,
+  "dead_lettered": false
 }
 ```
 
@@ -80,6 +87,8 @@ Retrieve generated variations ranked by Song Fit Score and the auto-selected bes
   "job_id": "uuid",
   "status": "completed",
   "message": "Vocal transformation complete.",
+  "queue_target": "gpu",
+  "worker_capability": "gpu",
   "selected_variation_label": "Studio Clean",
   "analysis": {
     "key": "A",

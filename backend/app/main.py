@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
-from app.queue import enqueue_job, get_job_data, set_job_data, update_job_data
+from app.queue import decide_queue, enqueue_job, get_job_data, set_job_data, update_job_data
 from app.schemas import (
     JobResultResponse,
     JobStatusResponse,
@@ -91,6 +91,10 @@ async def upload(
             "analysis": {},
             "results": [],
             "selected_variation_label": None,
+            "queue_target": None,
+            "worker_capability": None,
+            "retry_count": 0,
+            "dead_lettered": False,
             "error": None,
         },
     )
@@ -103,22 +107,38 @@ async def process(request: ProcessRequest) -> ProcessResponse:
     if state is None:
         raise HTTPException(status_code=404, detail="Unknown job_id")
 
-    enqueue_job(
-        {
-            "job_id": request.job_id,
-            "style_controls": request.style_controls.model_dump(),
-            "preferred_variations": request.preferred_variations,
-        }
-    )
+    requires_gpu = settings.use_gpu
+    if request.force_queue is not None:
+        requires_gpu = request.force_queue == "gpu"
+    queue = decide_queue(requires_gpu=requires_gpu)
+    payload = {
+        "job_id": request.job_id,
+        "style_controls": request.style_controls.model_dump(),
+        "preferred_variations": request.preferred_variations,
+        "requires_gpu": requires_gpu,
+        "attempt": 0,
+    }
+    enqueue_job(payload, queue=queue)
+
     queued_at = datetime.now(timezone.utc)
     update_job_data(
         request.job_id,
         status="queued",
         progress=max(int(state.get("progress", 0)), 10),
-        message="Queued for processing.",
+        message=f"Queued for processing on {queue.value} worker pool.",
         queued_at=queued_at.isoformat(),
+        queue_target=queue.value,
+        retry_count=0,
+        dead_lettered=False,
+        error=None,
     )
-    return ProcessResponse(job_id=request.job_id, status="queued", queued_at=queued_at)
+    return ProcessResponse(
+        job_id=request.job_id,
+        status="queued",
+        queued_at=queued_at,
+        queue_target=queue.value,
+        requires_gpu=requires_gpu,
+    )
 
 
 @app.get("/status/{job_id}", response_model=JobStatusResponse)
@@ -133,6 +153,10 @@ async def status(job_id: str) -> JobStatusResponse:
         message=state.get("message", ""),
         updated_at=datetime.fromisoformat(state["updated_at"]),
         error=state.get("error"),
+        queue_target=state.get("queue_target"),
+        worker_capability=state.get("worker_capability"),
+        retry_count=int(state.get("retry_count", 0)),
+        dead_lettered=bool(state.get("dead_lettered", False)),
     )
 
 
@@ -148,7 +172,7 @@ async def results(job_id: str) -> JobResultResponse:
         VariationResult(
             label=item["label"],
             media_url=item["media_url"],
-            song_fit_score=item.get("song_fit_score", {}),
+            song_fit_score=float(item.get("song_fit_score", 0.0)),
             rank=int(item.get("rank", idx + 1)),
             metadata=item.get("metadata", {}),
         )
@@ -161,4 +185,6 @@ async def results(job_id: str) -> JobResultResponse:
         selected_variation_label=state.get("selected_variation_label"),
         analysis=state.get("analysis", {}),
         variations=variations,
+        queue_target=state.get("queue_target"),
+        worker_capability=state.get("worker_capability"),
     )

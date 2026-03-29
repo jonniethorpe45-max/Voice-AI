@@ -9,7 +9,7 @@ Production-ready MVP for a **song-aware vocal resynthesis app** that transforms 
   - `POST /process`
   - `GET /status/{job_id}`
   - `GET /results/{job_id}`
-- Redis-backed async queue + worker
+- Redis-backed async queue with CPU/GPU worker pools
 - Modular audio pipeline:
   - Source separation (Demucs best effort + fallback)
   - Analysis (F0, note segmentation, phrasing, breath events, loudness, key/chords)
@@ -19,7 +19,7 @@ Production-ready MVP for a **song-aware vocal resynthesis app** that transforms 
   - Song-aware section adaptation
   - Mixing + 5 output variations
   - Song Fit Score ranking + automatic best variation selection
-- Dockerized deployment for API + worker + Redis
+- Dockerized deployment for API + CPU worker + GPU worker + Redis
 - Flutter mobile/web frontend scaffold with required screens
 - Sample audio generation utility and API docs
 
@@ -56,7 +56,7 @@ export VOCALFIT_MODEL_ROOT=/workspace/models
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### 3) Run worker
+### 3) Run workers
 
 ```bash
 cd backend
@@ -64,7 +64,12 @@ source .venv/bin/activate
 export VOCALFIT_REDIS_URL=redis://localhost:6379/0
 export VOCALFIT_STORAGE_ROOT=/workspace/data
 export VOCALFIT_MODEL_ROOT=/workspace/models
-python3 worker.py
+
+# CPU worker pool
+python3 worker_cpu.py
+
+# GPU worker pool (run on GPU instance)
+VOCALFIT_WORKER_CAPABILITY=gpu VOCALFIT_USE_GPU=true python3 worker_gpu.py
 ```
 
 ### 4) Generate sample audio
@@ -86,6 +91,9 @@ Services:
 - API: `http://localhost:8000`
 - API docs: `http://localhost:8000/docs`
 - Redis: `localhost:6379`
+- CPU worker queue: `vocalfit:jobs:cpu`
+- GPU worker queue: `vocalfit:jobs:gpu`
+- Dead-letter queue: `vocalfit:jobs:dead`
 
 ## Frontend run (Flutter)
 
@@ -105,4 +113,5 @@ flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8000
 
 - This MVP is intentionally conservative in DSP to reduce robotic artifacts.
 - Demucs and neural checkpoints are pluggable; fallback paths keep the pipeline runnable in constrained environments.
+- SaaS routing supports queue-based CPU/GPU dispatch, worker capability tracking, retry counts, and dead-letter handling.
 - See `api/README.md` for endpoint examples and payloads.

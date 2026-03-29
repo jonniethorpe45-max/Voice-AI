@@ -10,9 +10,13 @@ class Settings(BaseSettings):
     app_version: str = "0.1.0"
 
     redis_url: str = "redis://redis:6379/0"
-    queue_name: str = "vocalfit:jobs"
+    queue_cpu_name: str = "vocalfit:jobs:cpu"
+    queue_gpu_name: str = "vocalfit:jobs:gpu"
+    queue_dead_letter_name: str = "vocalfit:jobs:dead"
     job_status_prefix: str = "vocalfit:status:"
     job_ttl_seconds: int = 86400
+    queue_block_seconds: int = 2
+    max_job_retries: int = 2
 
     storage_root: Path = Path("/app/data")
     upload_subdir: str = "uploads"
@@ -21,6 +25,7 @@ class Settings(BaseSettings):
 
     use_gpu: bool = True
     use_demucs: bool = True
+    worker_capability: str = "cpu"
     max_file_size_mb: int = 150
     allowed_audio_extensions: set[str] = {".wav", ".mp3", ".m4a"}
     cors_origins: list[str] = ["*"]
