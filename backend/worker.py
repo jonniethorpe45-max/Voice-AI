@@ -12,7 +12,7 @@ from app.queue import (
     should_retry,
     update_job_data,
 )
-from workers.job_runner import process_payload
+from workers.job_runner import run_job_payload
 
 
 def _resolve_capability(capability_override: str | None = None) -> QueueName:
@@ -36,7 +36,7 @@ def main(capability_override: str | None = None) -> None:
             continue
 
         try:
-            process_payload(payload=payload, capability=queue)
+            run_job_payload(payload=payload, capability=queue)
         except Exception as exc:  # pragma: no cover
             reason = f"{type(exc).__name__}: {exc}"
             attempted_payload = increment_attempt(payload)

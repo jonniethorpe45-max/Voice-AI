@@ -111,15 +111,6 @@ async def process(request: ProcessRequest) -> ProcessResponse:
     if request.force_queue is not None:
         requires_gpu = request.force_queue == "gpu"
     queue = decide_queue(requires_gpu=requires_gpu)
-    payload = {
-        "job_id": request.job_id,
-        "style_controls": request.style_controls.model_dump(),
-        "preferred_variations": request.preferred_variations,
-        "requires_gpu": requires_gpu,
-        "attempt": 0,
-    }
-    enqueue_job(payload, queue=queue)
-
     queued_at = datetime.now(timezone.utc)
     update_job_data(
         request.job_id,
@@ -132,6 +123,15 @@ async def process(request: ProcessRequest) -> ProcessResponse:
         dead_lettered=False,
         error=None,
     )
+    payload = {
+        "job_id": request.job_id,
+        "style_controls": request.style_controls.model_dump(),
+        "preferred_variations": request.preferred_variations,
+        "requires_gpu": requires_gpu,
+        "queue_target": queue.value,
+        "attempt": 0,
+    }
+    enqueue_job(payload, queue=queue)
     return ProcessResponse(
         job_id=request.job_id,
         status="queued",

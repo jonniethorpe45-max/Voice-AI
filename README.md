@@ -39,8 +39,16 @@ Production-ready MVP for a **song-aware vocal resynthesis app** that transforms 
 
 ### 1) Start Redis
 
+Docker option:
 ```bash
 docker run --rm -p 6379:6379 redis:7-alpine
+```
+
+Native option:
+```bash
+sudo apt-get update
+sudo apt-get install -y redis-server
+redis-server --port 6379 --save "" --appendonly no
 ```
 
 ### 2) Run backend API
@@ -49,11 +57,14 @@ docker run --rm -p 6379:6379 redis:7-alpine
 cd backend
 python3 -m venv .venv
 source .venv/bin/activate
+pip install --upgrade pip
 pip install -r requirements.txt
+mkdir -p /workspace/data /workspace/models
 export VOCALFIT_REDIS_URL=redis://localhost:6379/0
 export VOCALFIT_STORAGE_ROOT=/workspace/data
 export VOCALFIT_MODEL_ROOT=/workspace/models
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+export VOCALFIT_USE_GPU=false
+uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 ### 3) Run workers
@@ -66,11 +77,24 @@ export VOCALFIT_STORAGE_ROOT=/workspace/data
 export VOCALFIT_MODEL_ROOT=/workspace/models
 
 # CPU worker pool
-python3 worker_cpu.py
+VOCALFIT_WORKER_CAPABILITY=cpu VOCALFIT_USE_GPU=false python3 worker_cpu.py
 
 # GPU worker pool (run on GPU instance)
 VOCALFIT_WORKER_CAPABILITY=gpu VOCALFIT_USE_GPU=true python3 worker_gpu.py
 ```
+
+### Deterministic startup checks
+
+After starting services, verify:
+
+```bash
+curl -sS http://localhost:8000/health
+redis-cli -h localhost -p 6379 ping
+```
+
+Expected:
+- `/health` returns `{"status":"ok"}`
+- Redis returns `PONG`
 
 ### 4) Generate sample audio
 

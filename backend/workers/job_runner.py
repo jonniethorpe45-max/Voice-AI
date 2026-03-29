@@ -93,6 +93,8 @@ def run_job_payload(*, payload: dict[str, Any], capability: QueueName) -> None:
             "selected_variation": selected,
             "worker_capability": capability.value,
             "retry_count": int(payload.get("attempt", 0)),
+            "queue_target": state.get("queue_target")
+            or (QueueName.GPU.value if requires_gpu else QueueName.CPU.value),
             "error": None,
         },
     )

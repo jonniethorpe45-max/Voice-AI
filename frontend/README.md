@@ -9,6 +9,18 @@ flutter pub get
 flutter run --dart-define=API_BASE_URL=http://localhost:8000
 ```
 
+For Android emulator use:
+
+```bash
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000
+```
+
+For iOS simulator use:
+
+```bash
+flutter run --dart-define=API_BASE_URL=http://localhost:8000
+```
+
 If `API_BASE_URL` is omitted, the app defaults to:
 
 `http://localhost:8000`
