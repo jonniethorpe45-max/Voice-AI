@@ -17,7 +17,15 @@ class ApiClient {
     if (trimmed.isEmpty) {
       return 'http://localhost:8000';
     }
-    return trimmed.endsWith('/') ? trimmed.substring(0, trimmed.length - 1) : trimmed;
+    final withScheme = trimmed.contains('://') ? trimmed : 'http://$trimmed';
+    final parsed = Uri.tryParse(withScheme);
+    if (parsed == null || !parsed.hasScheme || !parsed.hasAuthority) {
+      return 'http://localhost:8000';
+    }
+    final normalized = withScheme.endsWith('/')
+        ? withScheme.substring(0, withScheme.length - 1)
+        : withScheme;
+    return normalized;
   }
 
   Uri _uri(String path) => Uri.parse('$baseUrl$path');
