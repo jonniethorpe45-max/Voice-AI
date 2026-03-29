@@ -26,7 +26,7 @@ class _AppShellState extends State<AppShell> {
     defaultValue: 'http://localhost:8000',
   );
 
-  final ApiClient _api = ApiClient(baseUrl: _defaultBase);
+  late final ApiClient _api = ApiClient(baseUrl: _defaultBase);
   AppStage _stage = AppStage.home;
   final ValueNotifier<double> _progress = ValueNotifier<double>(0.0);
 
@@ -115,13 +115,13 @@ class _AppShellState extends State<AppShell> {
       String jobId;
       if (!refine) {
         if (vocalPath == null) {
-          throw Exception('Select a vocal file first.');
+          throw Exception('Please select a vocal file before analyzing.');
         }
         jobId = await _api.upload(vocalPath: vocalPath, instrumentalPath: songPath);
         _jobId = jobId;
       } else {
         if (_jobId == null) {
-          throw Exception('No previous job to refine.');
+          throw Exception('No previous session found. Upload a vocal first.');
         }
         jobId = _jobId!;
       }
@@ -131,7 +131,7 @@ class _AppShellState extends State<AppShell> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _error = _humanizeError(e);
           _stage = AppStage.upload;
         });
       }
@@ -144,7 +144,9 @@ class _AppShellState extends State<AppShell> {
   }
 
   Future<void> _pollUntilComplete(String jobId) async {
-    for (int i = 0; i < 240; i++) {
+    const maxPolls = 240;
+    const pollDelay = Duration(seconds: 2);
+    for (int i = 0; i < maxPolls; i++) {
       final status = await _api.status(jobId);
       _progress.value = (status.progress.clamp(0, 100) as num).toDouble() / 100.0;
       if (mounted) {
@@ -164,6 +166,8 @@ class _AppShellState extends State<AppShell> {
               selectedLabel: data.selectedVariationLabel,
             );
             _trackDuration = _selected.duration;
+          } else {
+            _versions = const [];
           }
           _trackName = data.songName ?? _trackName;
           _stage = AppStage.results;
@@ -173,9 +177,9 @@ class _AppShellState extends State<AppShell> {
       if (status.status == 'failed') {
         throw Exception(status.error ?? status.message);
       }
-      await Future<void>.delayed(const Duration(seconds: 2));
+      await Future<void>.delayed(pollDelay);
     }
-    throw Exception('Processing timed out.');
+    throw Exception('Processing timed out. Please retry.');
   }
 
   VocalVersion _pickSelected({
@@ -193,6 +197,26 @@ class _AppShellState extends State<AppShell> {
     return sorted.first;
   }
 
+  String _humanizeError(Object e) {
+    final raw = e.toString();
+    if (raw.contains('SocketException')) {
+      return 'Network error. Check API server availability and API_BASE_URL.';
+    }
+    if (raw.contains('timed out')) {
+      return 'Request timed out. Please try again.';
+    }
+    if (raw.contains('413')) {
+      return 'Uploaded file is too large for server limits.';
+    }
+    if (raw.contains('404')) {
+      return 'Job not found on backend. Please upload again.';
+    }
+    if (raw.contains('409')) {
+      return 'Job is still processing. Please wait a little longer.';
+    }
+    return raw.replaceFirst('Exception: ', '');
+  }
+
   @override
   Widget build(BuildContext context) {
     final body = switch (_stage) {
@@ -202,6 +226,8 @@ class _AppShellState extends State<AppShell> {
             _versions = DemoData.versions;
             _selected = DemoData.versions.first;
             _trackName = 'Neon Skyline';
+            _trackDuration = _selected.duration;
+            _error = null;
             _stage = AppStage.results;
           }),
         ),
@@ -217,6 +243,15 @@ class _AppShellState extends State<AppShell> {
           progress: _progress,
           isRefinement: _refining,
           statusText: _processingMessage,
+          canCancel: _processingActive,
+          onCancel: () {
+            setState(() {
+              _processingActive = false;
+              _refining = false;
+              _processingMessage = 'Canceled by user.';
+              _stage = AppStage.upload;
+            });
+          },
         ),
       AppStage.results => ResultsScreen(
           trackName: _trackName,
@@ -272,9 +307,21 @@ class _AppShellState extends State<AppShell> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0x77FF4D4D)),
                 ),
-                child: Text(
-                  _error!,
-                  style: const TextStyle(color: Colors.white),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _error!,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => setState(() => _error = null),
+                      icon: const Icon(Icons.close, color: Colors.white),
+                    ),
+                  ],
                 ),
               ),
             ),

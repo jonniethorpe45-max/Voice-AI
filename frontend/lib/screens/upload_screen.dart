@@ -43,7 +43,7 @@ class _UploadScreenState extends State<UploadScreen> {
           Text('Upload', style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: AppTheme.s8),
           Text(
-            'Drag & drop or tap to attach files.',
+            'Drag & drop or tap to attach files. Vocal is required.',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: AppTheme.s20),
@@ -124,6 +124,13 @@ class _UploadScreenState extends State<UploadScreen> {
             icon: Icons.auto_awesome_rounded,
             onPressed: widget.vocalName != null && !widget.busy ? _submit : null,
           ),
+          if (widget.vocalName == null) ...[
+            const SizedBox(height: AppTheme.s8),
+            const Text(
+              'Please upload a vocal file to continue.',
+              style: TextStyle(color: AppTheme.textLow),
+            ),
+          ],
         ],
       ),
     );

@@ -133,6 +133,63 @@ Set API URL with:
 flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8000
 ```
 
+## Local Demo Run (quick path)
+
+1) Start Redis:
+```bash
+redis-server --port 6379 --save "" --appendonly no
+```
+
+2) Start API:
+```bash
+cd backend
+source .venv/bin/activate
+VOCALFIT_REDIS_URL=redis://localhost:6379/0 \
+VOCALFIT_STORAGE_ROOT=/workspace/data \
+VOCALFIT_MODEL_ROOT=/workspace/models \
+VOCALFIT_USE_GPU=false \
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+3) Start worker(s):
+```bash
+cd backend
+source .venv/bin/activate
+VOCALFIT_REDIS_URL=redis://localhost:6379/0 \
+VOCALFIT_STORAGE_ROOT=/workspace/data \
+VOCALFIT_MODEL_ROOT=/workspace/models \
+VOCALFIT_WORKER_CAPABILITY=cpu \
+VOCALFIT_USE_GPU=false \
+python3 worker_cpu.py
+```
+
+4) Start frontend (use correct device base URL):
+```bash
+cd frontend
+flutter pub get
+# Web / iOS simulator
+flutter run --dart-define=API_BASE_URL=http://localhost:8000
+# Android emulator
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000
+# Physical device
+flutter run --dart-define=API_BASE_URL=http://<LAN_IP>:8000
+```
+
+## Staging Deployment Checklist
+
+- [ ] Backend `.env` is based on `backend/.env.example` with explicit values for:
+  - `VOCALFIT_REDIS_URL`
+  - `VOCALFIT_STORAGE_ROOT`
+  - `VOCALFIT_MODEL_ROOT`
+  - `VOCALFIT_CORS_ORIGINS` (not `*` in staging)
+- [ ] Frontend build defines `API_BASE_URL` (or `FRONTEND_API_BASE_URL`) pointing to staging API
+- [ ] Redis, API, and at least one worker are running and healthy
+- [ ] `/health` returns OK and `/media/...` URLs are publicly reachable by app clients
+- [ ] Upload -> process -> status -> results flow completes for staging sample files
+- [ ] Playback works from returned media URLs
+- [ ] Export opens/downloads selected media URL
+- [ ] Logs capture API and worker errors with actionable messages
+
 ## Notes
 
 - This MVP is intentionally conservative in DSP to reduce robotic artifacts.

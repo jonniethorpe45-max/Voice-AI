@@ -22,8 +22,13 @@ class ExportScreen extends StatefulWidget {
 
 class _ExportScreenState extends State<ExportScreen> {
   String _format = 'WAV';
+  bool _exporting = false;
 
   Future<void> _launchExport() async {
+    if (_exporting) {
+      return;
+    }
+    setState(() => _exporting = true);
     final media = widget.selected.mediaUrl;
     if (media.isEmpty) {
       if (!mounted) {
@@ -32,6 +37,9 @@ class _ExportScreenState extends State<ExportScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No media URL available for export.')),
       );
+      if (mounted) {
+        setState(() => _exporting = false);
+      }
       return;
     }
     final uri = Uri.tryParse(media);
@@ -42,6 +50,9 @@ class _ExportScreenState extends State<ExportScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Invalid media URL.')),
       );
+      if (mounted) {
+        setState(() => _exporting = false);
+      }
       return;
     }
     final launched = await launchUrl(
@@ -52,6 +63,9 @@ class _ExportScreenState extends State<ExportScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Unable to open export URL.')),
       );
+    }
+    if (mounted) {
+      setState(() => _exporting = false);
     }
   }
 
@@ -108,9 +122,9 @@ class _ExportScreenState extends State<ExportScreen> {
           ),
           const Spacer(),
           NeonButton(
-            text: 'Export Studio Version',
+            text: _exporting ? 'Exporting...' : 'Export Studio Version',
             icon: Icons.rocket_launch_rounded,
-            onPressed: _launchExport,
+            onPressed: _exporting ? null : _launchExport,
           ),
         ],
       ),

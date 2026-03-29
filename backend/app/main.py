@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import quote
 from uuid import uuid4
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
@@ -44,6 +45,12 @@ def _validate_audio_file(file: UploadFile) -> str:
             detail=f"Unsupported format '{ext}'. Allowed: {sorted(settings.allowed_audio_extensions)}",
         )
     return ext
+
+
+def _safe_media_url(path: Path) -> str:
+    rel = path.relative_to(settings.storage_root)
+    encoded = "/".join(quote(part) for part in rel.parts)
+    return f"/media/{encoded}"
 
 
 @app.get("/health")
@@ -146,6 +153,7 @@ async def status(job_id: str) -> JobStatusResponse:
     state = get_job_data(job_id)
     if state is None:
         raise HTTPException(status_code=404, detail="Unknown job_id")
+    queue_target = state.get("queue_target") or state.get("worker_capability")
     return JobStatusResponse(
         job_id=job_id,
         status=state["status"],
@@ -153,7 +161,7 @@ async def status(job_id: str) -> JobStatusResponse:
         message=state.get("message", ""),
         updated_at=datetime.fromisoformat(state["updated_at"]),
         error=state.get("error"),
-        queue_target=state.get("queue_target"),
+        queue_target=queue_target,
         worker_capability=state.get("worker_capability"),
         retry_count=int(state.get("retry_count", 0)),
         dead_lettered=bool(state.get("dead_lettered", False)),
@@ -168,16 +176,22 @@ async def results(job_id: str) -> JobResultResponse:
     if state["status"] not in {"completed", "completed_with_warnings"}:
         raise HTTPException(status_code=409, detail="Job not completed yet")
 
-    variations = [
-        VariationResult(
-            label=item["label"],
-            media_url=item["media_url"],
-            song_fit_score=float(item.get("song_fit_score", 0.0)),
-            rank=int(item.get("rank", idx + 1)),
-            metadata=item.get("metadata", {}),
+    variations: list[VariationResult] = []
+    for idx, item in enumerate(state.get("results", [])):
+        media_url = str(item.get("media_url", ""))
+        if media_url.startswith("/"):
+            media_path = settings.storage_root / media_url.removeprefix("/media/")
+            media_url = _safe_media_url(media_path) if media_path.exists() else media_url
+        variations.append(
+            VariationResult(
+                label=item["label"],
+                media_url=media_url,
+                song_fit_score=float(item.get("song_fit_score", 0.0)),
+                rank=int(item.get("rank", idx + 1)),
+                metadata=item.get("metadata", {}),
+            )
         )
-        for idx, item in enumerate(state.get("results", []))
-    ]
+    queue_target = state.get("queue_target") or state.get("worker_capability")
     return JobResultResponse(
         job_id=job_id,
         status=state["status"],
@@ -185,6 +199,6 @@ async def results(job_id: str) -> JobResultResponse:
         selected_variation_label=state.get("selected_variation_label"),
         analysis=state.get("analysis", {}),
         variations=variations,
-        queue_target=state.get("queue_target"),
+        queue_target=queue_target,
         worker_capability=state.get("worker_capability"),
     )

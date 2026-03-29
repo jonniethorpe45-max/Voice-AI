@@ -45,6 +45,7 @@ class ResultsScreen extends StatefulWidget {
 class _ResultsScreenState extends State<ResultsScreen> {
   final AudioPlayerService _playerService = AudioPlayerService();
   Timer? _ticker;
+  String? _playbackError;
 
   @override
   void initState() {
@@ -101,6 +102,13 @@ class _ResultsScreenState extends State<ResultsScreen> {
           ),
           const SizedBox(height: AppTheme.s16),
           Text('Versions', style: Theme.of(context).textTheme.headlineSmall),
+          if (_playbackError != null) ...[
+            const SizedBox(height: AppTheme.s8),
+            Text(
+              _playbackError!,
+              style: const TextStyle(color: Colors.orangeAccent, fontSize: 12),
+            ),
+          ],
           const SizedBox(height: AppTheme.s12),
           SizedBox(
             height: 216,
@@ -180,20 +188,36 @@ class _ResultsScreenState extends State<ResultsScreen> {
                           buffered: _playerService.bufferedFactor(v.id),
                           loading: _playerService.isLoading(v.id),
                           onToggle: () async {
-                            await _playerService.toggle(id: v.id, url: v.mediaUrl);
+                            final ok = await _playerService.toggle(id: v.id, url: v.mediaUrl);
                             if (!mounted) {
                               return;
                             }
-                            setState(() {});
+                            setState(() {
+                              _playbackError = ok ? null : _playerService.lastErrorMessage;
+                            });
                           },
                           onSeek: (value) async {
-                            await _playerService.seekFactor(id: v.id, factor: value);
+                            final ok = await _playerService.seekFactor(id: v.id, factor: value);
                             if (!mounted) {
                               return;
                             }
-                            setState(() {});
+                            setState(() {
+                              _playbackError = ok ? null : _playerService.lastErrorMessage;
+                            });
                           },
                         ),
+                        if (_playerService.lastError(v.id) != null) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            _playerService.lastError(v.id)!,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.orangeAccent,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: AppTheme.s8),
                         AnimatedWaveform(
                           height: 28,

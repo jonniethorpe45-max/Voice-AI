@@ -80,10 +80,11 @@ def run_job_payload(*, payload: dict[str, Any], capability: QueueName) -> None:
         outputs[0] if outputs else None,
     )
 
+    latest_state = get_job_data(job_id) or state
     set_job_data(
         job_id,
         {
-            **state,
+            **latest_state,
             "status": "completed",
             "progress": 100,
             "message": "Vocal transformation complete.",

@@ -12,11 +12,15 @@ class ProcessingScreen extends StatefulWidget {
     required this.progress,
     required this.isRefinement,
     required this.statusText,
+    required this.canCancel,
+    required this.onCancel,
   });
 
   final ValueNotifier<double> progress;
   final bool isRefinement;
   final String? statusText;
+  final bool canCancel;
+  final VoidCallback onCancel;
 
   @override
   State<ProcessingScreen> createState() => _ProcessingScreenState();
@@ -88,6 +92,13 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
                 '${(progress * 100).toStringAsFixed(0)}%',
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
+              const SizedBox(height: AppTheme.s12),
+              if (widget.canCancel)
+                TextButton.icon(
+                  onPressed: widget.onCancel,
+                  icon: const Icon(Icons.close_rounded),
+                  label: const Text('Cancel'),
+                ),
             ],
           );
         },
