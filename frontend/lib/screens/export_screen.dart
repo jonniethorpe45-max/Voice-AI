@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../components/glass_card.dart';
 import '../components/neon_button.dart';
@@ -21,6 +22,38 @@ class ExportScreen extends StatefulWidget {
 
 class _ExportScreenState extends State<ExportScreen> {
   String _format = 'WAV';
+
+  Future<void> _launchExport() async {
+    final media = widget.selected.mediaUrl;
+    if (media.isEmpty) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No media URL available for export.')),
+      );
+      return;
+    }
+    final uri = Uri.tryParse(media);
+    if (uri == null) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid media URL.')),
+      );
+      return;
+    }
+    final launched = await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to open export URL.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,11 +110,7 @@ class _ExportScreenState extends State<ExportScreen> {
           NeonButton(
             text: 'Export Studio Version',
             icon: Icons.rocket_launch_rounded,
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Export started ($_format).')),
-              );
-            },
+            onPressed: _launchExport,
           ),
         ],
       ),

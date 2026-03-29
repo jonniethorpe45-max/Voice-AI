@@ -20,6 +20,11 @@ If `API_BASE_URL` is omitted, the app defaults to:
 - Real status polling (`GET /status/{job_id}`)
 - Real results loading (`GET /results/{job_id}`)
 
+## Playback + export
+
+- Variation cards now support real media playback via `just_audio` when `media_url` is available.
+- Export action now opens the selected variation `media_url` using `url_launcher` (external app/browser).
+
 ## UX behavior
 
 - Home -> Upload -> Processing -> Results -> Fine Tune -> Export

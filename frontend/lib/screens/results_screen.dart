@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../components/animated_waveform.dart';
@@ -7,12 +9,14 @@ import '../components/glass_card.dart';
 import '../components/glow_slider.dart';
 import '../components/neon_button.dart';
 import '../core/app_models.dart';
+import '../services/audio_player_service.dart';
 import '../theme/app_theme.dart';
 
-class ResultsScreen extends StatelessWidget {
+class ResultsScreen extends StatefulWidget {
   const ResultsScreen({
     super.key,
     required this.trackName,
+    required this.trackDuration,
     required this.versions,
     required this.selected,
     required this.controls,
@@ -24,6 +28,7 @@ class ResultsScreen extends StatelessWidget {
   });
 
   final String trackName;
+  final String trackDuration;
   final List<VocalVersion> versions;
   final VocalVersion selected;
   final QuickControls controls;
@@ -32,6 +37,34 @@ class ResultsScreen extends StatelessWidget {
   final VoidCallback onMakeBetter;
   final VoidCallback onFineTune;
   final VoidCallback onExport;
+
+  @override
+  State<ResultsScreen> createState() => _ResultsScreenState();
+}
+
+class _ResultsScreenState extends State<ResultsScreen> {
+  final AudioPlayerService _playerService = AudioPlayerService();
+  Timer? _ticker;
+
+  @override
+  void initState() {
+    super.initState();
+    _ticker = Timer.periodic(const Duration(milliseconds: 250), (_) {
+      if (!mounted) {
+        return;
+      }
+      if (_playerService.anyPlaying || _playerService.anyLoading) {
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    _playerService.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,14 +83,14 @@ class ResultsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        trackName,
+                        widget.trackName,
                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        selected.duration,
+                        widget.trackDuration,
                         style: const TextStyle(color: AppTheme.textLow),
                       ),
                     ],
@@ -73,13 +106,13 @@ class ResultsScreen extends StatelessWidget {
             height: 216,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              itemCount: versions.length,
+              itemCount: widget.versions.length,
               separatorBuilder: (_, __) => const SizedBox(width: AppTheme.s12),
               itemBuilder: (context, index) {
-                final v = versions[index];
-                final active = v.id == selected.id;
+                final v = widget.versions[index];
+                final active = v.id == widget.selected.id;
                 return GestureDetector(
-                  onTap: () => onSelect(v),
+                  onTap: () => widget.onSelect(v),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 220),
                     width: 232,
@@ -122,11 +155,14 @@ class ResultsScreen extends StatelessWidget {
                             ),
                             if (v.bestFit)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: AppTheme.neonBlue.withOpacity(0.18),
                                   borderRadius: BorderRadius.circular(999),
-                                  border: Border.all(color: AppTheme.neonBlue.withOpacity(0.6)),
+                                  border: Border.all(
+                                    color: AppTheme.neonBlue.withOpacity(0.6),
+                                  ),
                                 ),
                                 child: const Text(
                                   'Best Fit',
@@ -136,7 +172,28 @@ class ResultsScreen extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: AppTheme.s12),
-                        AudioPlayerScrubber(durationLabel: v.duration, seed: v.waveSeed),
+                        AudioPlayerScrubber(
+                          durationLabel: v.duration,
+                          seed: v.waveSeed,
+                          playing: _playerService.isPlaying(v.id),
+                          position: _playerService.positionFactor(v.id),
+                          buffered: _playerService.bufferedFactor(v.id),
+                          loading: _playerService.isLoading(v.id),
+                          onToggle: () async {
+                            await _playerService.toggle(id: v.id, url: v.mediaUrl);
+                            if (!mounted) {
+                              return;
+                            }
+                            setState(() {});
+                          },
+                          onSeek: (value) async {
+                            await _playerService.seekFactor(id: v.id, factor: value);
+                            if (!mounted) {
+                              return;
+                            }
+                            setState(() {});
+                          },
+                        ),
                         const SizedBox(height: AppTheme.s8),
                         AnimatedWaveform(
                           height: 28,
@@ -163,29 +220,34 @@ class ResultsScreen extends StatelessWidget {
                 children: [
                   GlowSlider(
                     label: 'Warmth',
-                    value: controls.warmth,
-                    onChanged: (v) => onControlsChanged(controls.copyWith(warmth: v)),
+                    value: widget.controls.warmth,
+                    onChanged: (v) =>
+                        widget.onControlsChanged(widget.controls.copyWith(warmth: v)),
                   ),
                   GlowSlider(
                     label: 'Brightness',
-                    value: controls.brightness,
-                    onChanged: (v) => onControlsChanged(controls.copyWith(brightness: v)),
+                    value: widget.controls.brightness,
+                    onChanged: (v) =>
+                        widget.onControlsChanged(widget.controls.copyWith(brightness: v)),
                   ),
                   GlowSlider(
                     label: 'Power',
-                    value: controls.power,
-                    onChanged: (v) => onControlsChanged(controls.copyWith(power: v)),
+                    value: widget.controls.power,
+                    onChanged: (v) =>
+                        widget.onControlsChanged(widget.controls.copyWith(power: v)),
                   ),
                   GlowSlider(
                     label: 'Emotion',
-                    value: controls.emotion,
-                    onChanged: (v) => onControlsChanged(controls.copyWith(emotion: v)),
+                    value: widget.controls.emotion,
+                    onChanged: (v) =>
+                        widget.onControlsChanged(widget.controls.copyWith(emotion: v)),
                   ),
                   GlowSlider(
                     label: 'Natural ↔ Enhanced',
-                    value: controls.naturalEnhanced,
-                    onChanged: (v) =>
-                        onControlsChanged(controls.copyWith(naturalEnhanced: v)),
+                    value: widget.controls.naturalEnhanced,
+                    onChanged: (v) => widget.onControlsChanged(
+                      widget.controls.copyWith(naturalEnhanced: v),
+                    ),
                   ),
                 ],
               ),
@@ -196,14 +258,14 @@ class ResultsScreen extends StatelessWidget {
             text: 'Make It Even Better',
             icon: Icons.auto_awesome_rounded,
             secondary: true,
-            onPressed: onMakeBetter,
+            onPressed: widget.onMakeBetter,
           ),
           const SizedBox(height: AppTheme.s12),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: onFineTune,
+                  onPressed: widget.onFineTune,
                   icon: const Icon(Icons.tune_rounded),
                   label: const Text('Fine Tune'),
                 ),
@@ -211,7 +273,7 @@ class ResultsScreen extends StatelessWidget {
               const SizedBox(width: AppTheme.s12),
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: onExport,
+                  onPressed: widget.onExport,
                   icon: const Icon(Icons.ios_share_rounded),
                   label: const Text('Export'),
                 ),
@@ -223,7 +285,7 @@ class ResultsScreen extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: FloatingGlowButton(
               icon: Icons.graphic_eq_rounded,
-              onPressed: onMakeBetter,
+              onPressed: widget.onMakeBetter,
               tooltip: 'AI Assist',
             ),
           ),

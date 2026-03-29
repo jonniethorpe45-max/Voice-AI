@@ -44,6 +44,7 @@ class _AppShellState extends State<AppShell> {
   String? _vocalName;
   String? _songName;
   String _trackName = 'Neon Skyline';
+  String _trackDuration = '03:24';
   String _processingMessage = '';
   String? _error;
 
@@ -162,6 +163,7 @@ class _AppShellState extends State<AppShell> {
               versions: versions,
               selectedLabel: data.selectedVariationLabel,
             );
+            _trackDuration = _selected.duration;
           }
           _trackName = data.songName ?? _trackName;
           _stage = AppStage.results;
@@ -218,10 +220,14 @@ class _AppShellState extends State<AppShell> {
         ),
       AppStage.results => ResultsScreen(
           trackName: _trackName,
+          trackDuration: _trackDuration,
           versions: _versions,
           selected: _selected,
           controls: _controls,
-          onSelect: (value) => setState(() => _selected = value),
+          onSelect: (value) => setState(() {
+            _selected = value;
+            _trackDuration = value.duration;
+          }),
           onControlsChanged: (value) => setState(() => _controls = value),
           onMakeBetter: () {
             _startProcessing(refine: true);
