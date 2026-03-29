@@ -3,20 +3,35 @@ import 'package:flutter/material.dart';
 import '../components/animated_waveform.dart';
 import '../components/glass_card.dart';
 import '../components/neon_button.dart';
+import '../core/app_models.dart';
 import '../theme/app_theme.dart';
 
 class UploadScreen extends StatefulWidget {
-  const UploadScreen({super.key, required this.onAnalyze});
+  const UploadScreen({
+    super.key,
+    required this.onPickVocal,
+    required this.onPickSong,
+    required this.vocalName,
+    required this.songName,
+    required this.onAnalyze,
+    required this.busy,
+  });
 
-  final VoidCallback onAnalyze;
+  final Future<void> Function() onPickVocal;
+  final Future<void> Function() onPickSong;
+  final String? vocalName;
+  final String? songName;
+  final Future<void> Function(QuickControls controls) onAnalyze;
+  final bool busy;
 
   @override
   State<UploadScreen> createState() => _UploadScreenState();
 }
 
 class _UploadScreenState extends State<UploadScreen> {
-  bool _vocalAttached = false;
-  bool _songAttached = false;
+  Future<void> _submit() async {
+    await widget.onAnalyze(const QuickControls());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,18 +59,33 @@ class _UploadScreenState extends State<UploadScreen> {
                         border: Border.all(color: AppTheme.neonBlue.withOpacity(0.55)),
                         color: Colors.white.withOpacity(0.02),
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.cloud_upload_rounded, size: 42),
-                            SizedBox(height: AppTheme.s12),
-                            Text('Drag & Drop Vocal / Song'),
-                            SizedBox(height: 4),
+                            const Icon(Icons.cloud_upload_rounded, size: 42),
+                            const SizedBox(height: AppTheme.s12),
+                            const Text('Drag & Drop Vocal / Song'),
+                            const SizedBox(height: 4),
                             Text(
-                              'Mobile-friendly upload zone',
-                              style: TextStyle(color: AppTheme.textLow),
+                              widget.vocalName != null
+                                  ? 'Vocal: ${widget.vocalName}'
+                                  : 'Mobile-friendly upload zone',
+                              style: const TextStyle(color: AppTheme.textLow),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
                             ),
+                            if (widget.songName != null) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                'Song: ${widget.songName}',
+                                style: const TextStyle(color: AppTheme.textLow),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -66,18 +96,18 @@ class _UploadScreenState extends State<UploadScreen> {
                     children: [
                       Expanded(
                         child: NeonButton(
-                          text: _vocalAttached ? 'Vocal Uploaded' : 'Upload Vocal',
+                          text: widget.vocalName == null ? 'Upload Vocal' : 'Vocal Uploaded',
                           icon: Icons.mic_rounded,
-                          onPressed: () => setState(() => _vocalAttached = true),
+                          onPressed: widget.busy ? null : widget.onPickVocal,
                         ),
                       ),
                       const SizedBox(width: AppTheme.s12),
                       Expanded(
                         child: NeonButton(
-                          text: _songAttached ? 'Song Uploaded' : 'Upload Song',
+                          text: widget.songName == null ? 'Upload Song' : 'Song Uploaded',
                           icon: Icons.library_music_rounded,
                           secondary: true,
-                          onPressed: () => setState(() => _songAttached = true),
+                          onPressed: widget.busy ? null : widget.onPickSong,
                         ),
                       ),
                     ],
@@ -90,9 +120,9 @@ class _UploadScreenState extends State<UploadScreen> {
           ),
           const SizedBox(height: AppTheme.s20),
           NeonButton(
-            text: 'Analyze My Voice',
+            text: widget.busy ? 'Analyzing...' : 'Analyze My Voice',
             icon: Icons.auto_awesome_rounded,
-            onPressed: _vocalAttached ? widget.onAnalyze : null,
+            onPressed: widget.vocalName != null && !widget.busy ? _submit : null,
           ),
         ],
       ),

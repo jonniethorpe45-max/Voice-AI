@@ -12,6 +12,7 @@ import '../theme/app_theme.dart';
 class ResultsScreen extends StatelessWidget {
   const ResultsScreen({
     super.key,
+    required this.trackName,
     required this.versions,
     required this.selected,
     required this.controls,
@@ -22,6 +23,7 @@ class ResultsScreen extends StatelessWidget {
     required this.onExport,
   });
 
+  final String trackName;
   final List<VocalVersion> versions;
   final VocalVersion selected;
   final QuickControls controls;
@@ -46,13 +48,18 @@ class ResultsScreen extends StatelessWidget {
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text(
-                        'Neon Skyline',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                        trackName,
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(height: 2),
-                      Text('03:24', style: TextStyle(color: AppTheme.textLow)),
+                      const SizedBox(height: 2),
+                      Text(
+                        selected.duration,
+                        style: const TextStyle(color: AppTheme.textLow),
+                      ),
                     ],
                   ),
                 ),

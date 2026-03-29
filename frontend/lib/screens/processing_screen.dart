@@ -11,10 +11,12 @@ class ProcessingScreen extends StatefulWidget {
     super.key,
     required this.progress,
     required this.isRefinement,
+    required this.statusText,
   });
 
   final ValueNotifier<double> progress;
   final bool isRefinement;
+  final String? statusText;
 
   @override
   State<ProcessingScreen> createState() => _ProcessingScreenState();
@@ -28,7 +30,7 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
   void initState() {
     super.initState();
     _messageTimer = Timer.periodic(const Duration(milliseconds: 900), (_) {
-      if (!mounted) {
+      if (!mounted || (widget.statusText != null && widget.statusText!.isNotEmpty)) {
         return;
       }
       setState(() {
@@ -62,8 +64,10 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 260),
                 child: Text(
-                  DemoData.processingText[_messageIndex],
-                  key: ValueKey(_messageIndex),
+                  (widget.statusText != null && widget.statusText!.isNotEmpty)
+                      ? widget.statusText!
+                      : DemoData.processingText[_messageIndex],
+                  key: ValueKey('${widget.statusText ?? ''}_$_messageIndex'),
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
               ),

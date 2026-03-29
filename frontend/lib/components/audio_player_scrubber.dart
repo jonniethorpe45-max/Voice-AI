@@ -20,8 +20,26 @@ class _AudioPlayerScrubberState extends State<AudioPlayerScrubber> {
   double _position = 0.0;
   bool _playing = false;
 
+  String _fmt(int sec) {
+    final m = (sec ~/ 60).toString().padLeft(2, '0');
+    final s = (sec % 60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  int _durationSeconds() {
+    final parts = widget.durationLabel.split(':');
+    if (parts.length != 2) {
+      return 0;
+    }
+    final minutes = int.tryParse(parts[0]) ?? 0;
+    final seconds = int.tryParse(parts[1]) ?? 0;
+    return (minutes * 60) + seconds;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final durationSec = _durationSeconds();
+    final currentSec = (durationSec * _position).round();
     return Column(
       children: [
         Row(
@@ -58,7 +76,7 @@ class _AudioPlayerScrubberState extends State<AudioPlayerScrubber> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '${(_position * 100).toStringAsFixed(0)}%',
+              _fmt(currentSec),
               style: const TextStyle(color: AppTheme.textLow, fontSize: 11),
             ),
             Text(
