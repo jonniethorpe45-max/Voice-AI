@@ -1,0 +1,64 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    volumes:
+      - ./backend:/app
+      - ./data:/app/data
+      - ./models:/app/models
+    environment:
+      VOCALFIT_REDIS_URL: redis://redis:6379/0
+      VOCALFIT_STORAGE_ROOT: /app/data
+      VOCALFIT_MODEL_ROOT: /app/models
+      VOCALFIT_USE_GPU: "true"
+    depends_on:
+      - redis
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  worker_cpu:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: python worker_cpu.py
+    volumes:
+      - ./backend:/app
+      - ./data:/app/data
+      - ./models:/app/models
+    environment:
+      VOCALFIT_REDIS_URL: redis://redis:6379/0
+      VOCALFIT_STORAGE_ROOT: /app/data
+      VOCALFIT_MODEL_ROOT: /app/models
+      VOCALFIT_WORKER_CAPABILITY: "cpu"
+      VOCALFIT_USE_GPU: "false"
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  worker_gpu:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: python worker_gpu.py
+    volumes:
+      - ./backend:/app
+      - ./data:/app/data
+      - ./models:/app/models
+    environment:
+      VOCALFIT_REDIS_URL: redis://redis:6379/0
+      VOCALFIT_STORAGE_ROOT: /app/data
+      VOCALFIT_MODEL_ROOT: /app/models
+      VOCALFIT_WORKER_CAPABILITY: "gpu"
+      VOCALFIT_USE_GPU: "true"
+    depends_on:
+      - redis
+    restart: unless-stopped

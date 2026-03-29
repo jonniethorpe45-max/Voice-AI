@@ -1,0 +1,26 @@
+name: vocalfit_ai
+description: VocalFit AI mobile/web MVP
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  file_picker: ^8.0.6
+  http: ^1.2.2
+  mime: ^1.0.5
+  http_parser: ^4.0.2
+  just_audio: ^0.10.5
+  url_launcher: ^6.3.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true

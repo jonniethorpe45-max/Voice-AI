@@ -1,0 +1,1 @@
+"""VocalFit AI backend package."""

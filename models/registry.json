@@ -1,0 +1,16 @@
+{
+  "models": [
+    {
+      "name": "svc-lightweight-mvp",
+      "type": "svc",
+      "version": "0.1.0",
+      "description": "Lightweight SVC-style timbre model placeholder for MVP."
+    },
+    {
+      "name": "demucs-optional",
+      "type": "separation",
+      "version": "optional",
+      "description": "External demucs executable used when installed."
+    }
+  ]
+}
