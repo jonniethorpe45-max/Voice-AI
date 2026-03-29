@@ -1,126 +1,224 @@
 import 'package:flutter/material.dart';
 
-import '../models.dart';
-import '../widgets/primary_button.dart';
+import '../components/animated_waveform.dart';
+import '../components/audio_player_scrubber.dart';
+import '../components/floating_glow_button.dart';
+import '../components/glass_card.dart';
+import '../components/glow_slider.dart';
+import '../components/neon_button.dart';
+import '../core/app_models.dart';
+import '../theme/app_theme.dart';
 
 class ResultsScreen extends StatelessWidget {
   const ResultsScreen({
     super.key,
-    required this.results,
-    required this.onAdjust,
+    required this.versions,
+    required this.selected,
+    required this.controls,
+    required this.onSelect,
+    required this.onControlsChanged,
+    required this.onMakeBetter,
+    required this.onFineTune,
     required this.onExport,
-    required this.onReset,
   });
 
-  final JobResults? results;
-  final VoidCallback onAdjust;
+  final List<VocalVersion> versions;
+  final VocalVersion selected;
+  final QuickControls controls;
+  final ValueChanged<VocalVersion> onSelect;
+  final ValueChanged<QuickControls> onControlsChanged;
+  final VoidCallback onMakeBetter;
+  final VoidCallback onFineTune;
   final VoidCallback onExport;
-  final VoidCallback onReset;
 
   @override
   Widget build(BuildContext context) {
-    final data = results;
-    if (data == null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('No results available yet.'),
-              const SizedBox(height: 12),
-              PrimaryButton(
-                text: 'Back to Upload',
-                icon: Icons.upload_file,
-                onPressed: onReset,
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppTheme.s20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Results', style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 8),
-          Text(
-            'Key: ${data.analysis['key'] ?? 'Unknown'} | Scale: ${data.analysis['scale'] ?? 'Unknown'}',
-            style: TextStyle(color: Colors.grey.shade400),
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: ListView.separated(
-              itemCount: data.variations.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final variation = data.variations[index];
-                return Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF171B24),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF2A3140)),
+          GlassCard(
+            child: Row(
+              children: [
+                const Icon(Icons.music_note_rounded, color: AppTheme.neonBlue),
+                const SizedBox(width: AppTheme.s12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'Neon Skyline',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                      ),
+                      SizedBox(height: 2),
+                      Text('03:24', style: TextStyle(color: AppTheme.textLow)),
+                    ],
                   ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.graphic_eq, color: Color(0xFF7C9DFF)),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppTheme.s16),
+          Text('Versions', style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: AppTheme.s12),
+          SizedBox(
+            height: 216,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: versions.length,
+              separatorBuilder: (_, __) => const SizedBox(width: AppTheme.s12),
+              itemBuilder: (context, index) {
+                final v = versions[index];
+                final active = v.id == selected.id;
+                return GestureDetector(
+                  onTap: () => onSelect(v),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    width: 232,
+                    padding: const EdgeInsets.all(AppTheme.s16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppTheme.r20),
+                      border: Border.all(
+                        color: active ? AppTheme.neonBlue : AppTheme.border,
+                        width: active ? 1.4 : 1.0,
+                      ),
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [AppTheme.glassStrong, AppTheme.glass],
+                      ),
+                      boxShadow: [
+                        if (active)
+                          BoxShadow(
+                            color: AppTheme.neonBlue.withOpacity(0.24),
+                            blurRadius: 20,
+                            spreadRadius: 1,
+                          ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           children: [
-                            Text(
-                              variation.label,
-                              style: const TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              variation.mediaUrl,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: Colors.grey.shade400,
-                                fontSize: 12,
+                            Expanded(
+                              child: Text(
+                                v.label,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
+                            if (v.bestFit)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.neonBlue.withOpacity(0.18),
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(color: AppTheme.neonBlue.withOpacity(0.6)),
+                                ),
+                                child: const Text(
+                                  'Best Fit',
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                                ),
+                              ),
                           ],
                         ),
-                      ),
-                      const Icon(Icons.play_circle_outline),
-                    ],
+                        const SizedBox(height: AppTheme.s12),
+                        AudioPlayerScrubber(durationLabel: v.duration, seed: v.waveSeed),
+                        const SizedBox(height: AppTheme.s8),
+                        AnimatedWaveform(
+                          height: 28,
+                          bars: 28,
+                          seed: v.waveSeed,
+                          baseColor: AppTheme.neonBlue,
+                        ),
+                        const Spacer(),
+                        Text(
+                          'Song Fit ${v.fitScore.toStringAsFixed(1)}',
+                          style: const TextStyle(color: AppTheme.textMedium),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppTheme.s16),
+          Expanded(
+            child: GlassCard(
+              child: ListView(
+                children: [
+                  GlowSlider(
+                    label: 'Warmth',
+                    value: controls.warmth,
+                    onChanged: (v) => onControlsChanged(controls.copyWith(warmth: v)),
+                  ),
+                  GlowSlider(
+                    label: 'Brightness',
+                    value: controls.brightness,
+                    onChanged: (v) => onControlsChanged(controls.copyWith(brightness: v)),
+                  ),
+                  GlowSlider(
+                    label: 'Power',
+                    value: controls.power,
+                    onChanged: (v) => onControlsChanged(controls.copyWith(power: v)),
+                  ),
+                  GlowSlider(
+                    label: 'Emotion',
+                    value: controls.emotion,
+                    onChanged: (v) => onControlsChanged(controls.copyWith(emotion: v)),
+                  ),
+                  GlowSlider(
+                    label: 'Natural ↔ Enhanced',
+                    value: controls.naturalEnhanced,
+                    onChanged: (v) =>
+                        onControlsChanged(controls.copyWith(naturalEnhanced: v)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: AppTheme.s12),
+          NeonButton(
+            text: 'Make It Even Better',
+            icon: Icons.auto_awesome_rounded,
+            secondary: true,
+            onPressed: onMakeBetter,
+          ),
+          const SizedBox(height: AppTheme.s12),
           Row(
             children: [
               Expanded(
-                child: PrimaryButton(
-                  text: 'Controls',
-                  icon: Icons.tune,
-                  onPressed: onAdjust,
+                child: OutlinedButton.icon(
+                  onPressed: onFineTune,
+                  icon: const Icon(Icons.tune_rounded),
+                  label: const Text('Fine Tune'),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppTheme.s12),
               Expanded(
-                child: PrimaryButton(
-                  text: 'Export',
-                  icon: Icons.ios_share,
+                child: OutlinedButton.icon(
                   onPressed: onExport,
+                  icon: const Icon(Icons.ios_share_rounded),
+                  label: const Text('Export'),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          TextButton.icon(
-            onPressed: onReset,
-            icon: const Icon(Icons.restart_alt),
-            label: const Text('Start Over'),
+          const SizedBox(height: AppTheme.s12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FloatingGlowButton(
+              icon: Icons.graphic_eq_rounded,
+              onPressed: onMakeBetter,
+              tooltip: 'AI Assist',
+            ),
           ),
         ],
       ),

@@ -1,58 +1,87 @@
 import 'package:flutter/material.dart';
 
-import '../models.dart';
-import '../widgets/primary_button.dart';
+import '../components/glass_card.dart';
+import '../components/neon_button.dart';
+import '../core/app_models.dart';
+import '../theme/app_theme.dart';
 
-class ExportScreen extends StatelessWidget {
+class ExportScreen extends StatefulWidget {
   const ExportScreen({
     super.key,
-    required this.results,
+    required this.selected,
     required this.onBack,
   });
 
-  final JobResults? results;
+  final VocalVersion selected;
   final VoidCallback onBack;
 
   @override
+  State<ExportScreen> createState() => _ExportScreenState();
+}
+
+class _ExportScreenState extends State<ExportScreen> {
+  String _format = 'WAV';
+
+  @override
   Widget build(BuildContext context) {
-    final first = (results != null && results!.variations.isNotEmpty)
-        ? results!.variations.first
-        : null;
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppTheme.s20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 8),
-          const Text(
-            'Export',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            first == null ? 'No variation selected.' : 'Selected: ${first.label}',
-            style: TextStyle(color: Colors.grey.shade300),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'In production this action can export locally, share to other apps, '
-            'or send directly to cloud storage.',
-          ),
-          const Spacer(),
-          PrimaryButton(
-            text: 'Export Mix',
-            icon: Icons.download_rounded,
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Export hook ready for integration.')),
-              );
-            },
-          ),
-          const SizedBox(height: 10),
           TextButton.icon(
-            onPressed: onBack,
+            onPressed: widget.onBack,
             icon: const Icon(Icons.arrow_back),
             label: const Text('Back'),
+          ),
+          const SizedBox(height: AppTheme.s12),
+          Text('Export', style: Theme.of(context).textTheme.headlineMedium),
+          const SizedBox(height: AppTheme.s8),
+          Text(
+            'Choose output format and export the studio version.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: AppTheme.s20),
+          GlassCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Selected Version', style: TextStyle(color: AppTheme.textLow)),
+                const SizedBox(height: AppTheme.s8),
+                Text(
+                  '${widget.selected.label} • ${widget.selected.duration}',
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppTheme.s20),
+          GlassCard(
+            child: Wrap(
+              spacing: AppTheme.s8,
+              runSpacing: AppTheme.s8,
+              children: ['MP3', 'WAV', 'Stems'].map((item) {
+                final active = _format == item;
+                return ChoiceChip(
+                  label: Text(item),
+                  selected: active,
+                  selectedColor: AppTheme.neonBlue.withOpacity(0.18),
+                  backgroundColor: Colors.white.withOpacity(0.05),
+                  side: BorderSide(color: active ? AppTheme.neonBlue : AppTheme.border),
+                  onSelected: (_) => setState(() => _format = item),
+                );
+              }).toList(),
+            ),
+          ),
+          const Spacer(),
+          NeonButton(
+            text: 'Export Studio Version',
+            icon: Icons.rocket_launch_rounded,
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Export started ($_format).')),
+              );
+            },
           ),
         ],
       ),

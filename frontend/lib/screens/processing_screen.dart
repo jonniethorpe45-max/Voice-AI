@@ -1,89 +1,92 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+
+import '../components/progress_orb.dart';
+import '../core/demo_data.dart';
+import '../theme/app_theme.dart';
 
 class ProcessingScreen extends StatefulWidget {
   const ProcessingScreen({
     super.key,
     required this.progress,
-    required this.message,
+    required this.isRefinement,
   });
 
-  final double progress;
-  final String message;
+  final ValueNotifier<double> progress;
+  final bool isRefinement;
 
   @override
   State<ProcessingScreen> createState() => _ProcessingScreenState();
 }
 
-class _ProcessingScreenState extends State<ProcessingScreen>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+class _ProcessingScreenState extends State<ProcessingScreen> {
+  int _messageIndex = 0;
+  Timer? _messageTimer;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..repeat(reverse: true);
+    _messageTimer = Timer.periodic(const Duration(milliseconds: 900), (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _messageIndex = (_messageIndex + 1) % DemoData.processingText.length;
+      });
+    });
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _messageTimer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final value = widget.progress.clamp(0.0, 1.0);
     return Padding(
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 16),
-          const Text(
-            'Processing',
-            style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            widget.message,
-            style: TextStyle(color: Colors.grey.shade300),
-          ),
-          const SizedBox(height: 20),
-          LinearProgressIndicator(value: value),
-          const SizedBox(height: 10),
-          Text('${(value * 100).toStringAsFixed(0)}%'),
-          const SizedBox(height: 26),
-          Expanded(
-            child: Center(
-              child: AnimatedBuilder(
-                animation: _controller,
-                builder: (context, child) {
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: List.generate(26, (index) {
-                      final wave = 28.0 +
-                          ((index % 9) * 6.0) +
-                          (_controller.value * 36.0);
-                      return Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 2),
-                        width: 6,
-                        height: wave,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF58E1FF),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      );
-                    }),
-                  );
-                },
+      padding: const EdgeInsets.all(AppTheme.s20),
+      child: ValueListenableBuilder<double>(
+        valueListenable: widget.progress,
+        builder: (context, value, _) {
+          final progress = value.clamp(0.0, 1.0);
+          return Column(
+            children: [
+              const SizedBox(height: AppTheme.s16),
+              Text(
+                widget.isRefinement ? 'Refining with AI' : 'AI Processing',
+                style: Theme.of(context).textTheme.headlineMedium,
               ),
-            ),
-          ),
-        ],
+              const SizedBox(height: AppTheme.s12),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 260),
+                child: Text(
+                  DemoData.processingText[_messageIndex],
+                  key: ValueKey(_messageIndex),
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              ),
+              const Spacer(),
+              ProgressOrb(progress: progress, size: 210),
+              const Spacer(),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 10,
+                  backgroundColor: Colors.white12,
+                  valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.neonBlue),
+                ),
+              ),
+              const SizedBox(height: AppTheme.s8),
+              Text(
+                '${(progress * 100).toStringAsFixed(0)}%',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ],
+          );
+        },
       ),
     );
   }
