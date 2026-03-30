@@ -21,4 +21,10 @@ export async function notificationsRouter(app: FastifyInstance): Promise<void> {
     await notificationsService.readAll();
     return reply.status(204).send();
   });
+
+  // Alias to preserve possible Flutter endpoint naming differences.
+  app.post("/notifications/mark-all-read", { preHandler: [requireAuth] }, async (_req, reply) => {
+    await notificationsService.readAll();
+    return reply.status(204).send();
+  });
 }

@@ -3,9 +3,10 @@ import { LeadStatus } from "@prisma/client";
 import { prisma } from "../../db/client";
 import { redis } from "../../jobs/queues";
 import { dbLeadStatusToApi } from "../../shared/utils/statusMappings";
+import { APP } from "../../config/app";
 
 const CACHE_KEY = "dashboard:stats:v1";
-const TTL_SECONDS = 60;
+const TTL_SECONDS = APP.dashboardCacheTtlSeconds;
 
 export async function getDashboardStats() {
   const cached = await redis.get(CACHE_KEY);

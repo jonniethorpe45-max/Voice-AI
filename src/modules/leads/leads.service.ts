@@ -151,3 +151,17 @@ export async function saveNotes(id: string, notes: string) {
   await prisma.lead.update({ where: { id }, data: { notes } });
   return getLead(id);
 }
+
+export async function listLetterQueue(filters: {
+  state?: "CA" | "FL";
+  county?: string;
+  status?: string;
+  page?: number;
+  page_size?: number;
+}) {
+  const q = { ...filters };
+  if (!q.status) {
+    q.status = "pendingApproval";
+  }
+  return listLeads(q);
+}

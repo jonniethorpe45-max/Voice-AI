@@ -28,6 +28,10 @@ export class NotificationsService {
     await prisma.notificationEvent.updateMany({ data: { isRead: true } });
   }
 
+  async unreadCount() {
+    return prisma.notificationEvent.count({ where: { isRead: false } });
+  }
+
   async create(input: { type: NotificationEventType; leadId: string; leadOwnerName?: string | null; message?: string | null }) {
     return prisma.notificationEvent.create({
       data: {
