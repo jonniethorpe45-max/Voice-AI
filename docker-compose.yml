@@ -1,58 +1,45 @@
 version: "3.9"
 
 services:
-  api:
+  app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: surplus_ops_api
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-    ports:
-      - "8000:8000"
+    container_name: taxdeeds_app
+    command: sh -c "npm run prisma:generate && npm run prisma:deploy && npm run dev"
     env_file:
       - .env
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
       redis:
         condition: service_started
-    volumes:
-      - .:/app
 
-  worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: surplus_ops_worker
-    command: python -m app.jobs.worker
-    env_file:
-      - .env
-    depends_on:
-      - redis
-      - db
-    volumes:
-      - .:/app
-
-  db:
-    image: postgres:16-alpine
-    container_name: surplus_ops_db
+  postgres:
+    image: postgres:15
+    container_name: taxdeeds_postgres
     environment:
-      POSTGRES_DB: surplus_ops
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: taxdeeds
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d surplus_ops"]
+      test: ["CMD-SHELL", "pg_isready -U user -d taxdeeds"]
       interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 20
 
   redis:
-    image: redis:7-alpine
-    container_name: surplus_ops_redis
+    image: redis:7
+    container_name: taxdeeds_redis
     ports:
       - "6379:6379"
 

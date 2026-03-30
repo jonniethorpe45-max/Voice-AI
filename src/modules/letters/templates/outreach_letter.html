@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Outreach Letter</title>
+    <style>
+      body { font-family: Arial, sans-serif; font-size: 14px; line-height: 1.5; color: #111; }
+      .header, .footer { margin-bottom: 20px; }
+      .subject { font-weight: bold; margin: 16px 0; }
+      .fl-badge { border: 2px solid #c62828; padding: 8px; margin-bottom: 12px; color: #c62828; font-weight: bold; }
+    </style>
+  </head>
+  <body>
+    {{#if is_florida}}
+    <div class="fl-badge">FLORIDA WORKFLOW - LEGAL REVIEW REQUIRED</div>
+    {{/if}}
+
+    <div class="header">
+      <div>{{company_name}}</div>
+      <div>{{company_address}}</div>
+      <div>Date: {{today_date}}</div>
+    </div>
+
+    <div>
+      <div>{{owner_name}}</div>
+      <div>{{mailing_address}}</div>
+      <div>{{city}}, {{state}} {{zip}}</div>
+    </div>
+
+    <div class="subject">Subject line: Notice of Unclaimed Surplus Funds — Parcel {{parcel_number}}</div>
+
+    <p>
+      Our records indicate there may be unclaimed surplus funds connected to
+      property located at {{property_address}}.
+    </p>
+
+    <p>Approximately {{surplus_amount}} may be available, subject to official verification.</p>
+
+    <p><strong>You may be able to claim these funds directly without paying a fee.</strong></p>
+
+    <p>
+      If you would like to discuss your options, please contact us at {{response_phone}}
+      or mail correspondence to {{response_po_box}}.
+    </p>
+
+    {{#if is_florida}}
+    <p>
+      This letter is for informational purposes only and does not constitute
+      legal advice. We recommend consulting an attorney regarding your claim.
+    </p>
+    {{/if}}
+
+    <div class="footer">
+      <div>{{company_name}}</div>
+      <div>{{company_address}}</div>
+    </div>
+  </body>
+</html>

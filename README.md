@@ -1,103 +1,52 @@
-# Surplus Recovery Ops Backend (FastAPI)
+# Tax Deeds Backend (Fastify + Prisma)
 
-Production-ready backend for the Surplus Recovery Ops Flutter admin app.
+Production-ready REST API backend for the Flutter Tax Deeds admin app.
 
 ## Stack
 
-- FastAPI
-- PostgreSQL
-- SQLAlchemy + Alembic
-- Redis + RQ background jobs
-- Docker Compose local environment
+- Node.js 20 + TypeScript 5
+- Fastify 4
+- Prisma 5 + PostgreSQL 15
+- BullMQ + Redis 7
+- Zod validation
+- Axios outbound integrations
+- Vitest tests
+- Docker + docker-compose
 
-## Features Implemented
-
-- Admin auth (JWT access + refresh)
-- County config for exactly:
-  - CA_LA
-  - CA_ORANGE
-  - CA_EL_DORADO
-  - CA_TULARE
-  - FL_LEE
-  - FL_BREVARD
-- Leads lifecycle and notes
-- Dashboard aggregates
-- County ingestion engine + adapters
-- Lead normalization, dedupe hash, quality flags
-- Contact enrichment abstraction (mailing address gate)
-- Lob integration layer:
-  - address verify/standardize
-  - preview letter
-  - approve/reject/hold
-  - send and tracking sync
-- Tracking timeline
-- Response intake:
-  - inbound email webhook
-  - Twilio webhook
-  - manual operator logging
-- Notifications
-- Audit logging
-- API docs at `/docs`
-
-## Quick Start (One command)
-
-1. Copy env:
+## One-command local startup
 
 ```bash
-cp .env.example .env
+cp .env.example .env && docker compose up --build
 ```
 
-2. Start everything:
+API: `http://localhost:3000/v1`
+
+Android emulator base URL: `http://10.0.2.2:3000/v1`
+
+## Local setup without Docker
 
 ```bash
-docker compose up --build
+npm install
+npm run prisma:generate
+npm run prisma:migrate
+npm run seed
+npm run dev
 ```
 
-3. Run migrations:
+## Key endpoints
 
-```bash
-docker compose exec api alembic upgrade head
-```
-
-4. Seed data:
-
-```bash
-docker compose exec api python -m scripts.seed
-```
-
-API: `http://localhost:8000`
-
-Docs: `http://localhost:8000/docs`
-
-## Auth
-
-Default seeded admin comes from `.env`:
-
-- `SEED_ADMIN_EMAIL`
-- `SEED_ADMIN_PASSWORD`
-
-Login endpoint:
-
-`POST /api/v1/auth/login`
-
-## Testing
-
-Run county adapter fixture tests:
-
-```bash
-pytest -q
-```
-
-## Notes on Flutter Contract
-
-This backend includes all endpoint groups and payload structures required in the task statement:
-
-- auth
-- dashboard
-- leads list/detail/notes/legal-review clear
-- letters queue/preview/approve/reject/hold/send
-- tracking list/detail/manual create
-- notifications
-- response intake and webhooks
-
-If you provide the exact `api_service.dart` + model files, we can do a strict final naming alignment pass in minutes.
+- `POST /v1/auth/login`
+- `POST /v1/auth/logout`
+- `POST /v1/auth/refresh`
+- `GET /v1/leads`
+- `GET /v1/leads/:id`
+- `POST /v1/leads/:id/approve`
+- `POST /v1/leads/:id/reject`
+- `POST /v1/leads/:id/hold`
+- `POST /v1/leads/:id/clear-legal-review`
+- `POST /v1/leads/:id/notes`
+- `GET /v1/dashboard/stats`
+- `GET /v1/notifications`
+- `POST /v1/notifications/:id/read`
+- `POST /v1/notifications/read-all`
+- `POST /v1/webhooks/lob`
