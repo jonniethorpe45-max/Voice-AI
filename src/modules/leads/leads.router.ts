@@ -34,8 +34,9 @@ export async function leadsRouter(app: FastifyInstance): Promise<void> {
 
   app.post("/leads/:id/clear-legal-review", { preHandler: [requireAuth] }, async (request, reply) => {
     const id = String((request.params as { id: string }).id);
-    const body = clearLegalReviewSchema.parse(request.body ?? {});
-    return reply.send(await clearLegalReview(id, request.user!, body.legal_review_cleared));
+    // Flutter sends no request body for this endpoint.
+    clearLegalReviewSchema.parse(request.body ?? {});
+    return reply.send(await clearLegalReview(id, request.user!, true));
   });
 
   app.post("/leads/:id/notes", { preHandler: [requireAuth] }, async (request, reply) => {

@@ -43,8 +43,14 @@ export class AuthService {
     };
   }
 
-  async logout(refreshToken: string): Promise<void> {
-    await prisma.refreshToken.deleteMany({ where: { token: refreshToken } });
+  async logout(refreshToken?: string, userId?: string): Promise<void> {
+    if (refreshToken) {
+      await prisma.refreshToken.deleteMany({ where: { token: refreshToken } });
+      return;
+    }
+    if (userId) {
+      await prisma.refreshToken.deleteMany({ where: { userId } });
+    }
   }
 
   async refresh(refreshToken: string) {

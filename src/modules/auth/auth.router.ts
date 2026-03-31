@@ -11,8 +11,11 @@ export async function authRouter(app: FastifyInstance): Promise<void> {
   });
 
   app.post("/auth/logout", { preHandler: [requireAuth] }, async (request, reply) => {
-    const body = refreshBodySchema.parse(request.body);
-    await authService.logout(body.refresh_token);
+    const body = refreshBodySchema.safeParse(request.body ?? {});
+    // Flutter client sends empty body for logout; backend should still 204.
+    if (body.success && body.data.refresh_token) {
+      await authService.logout(body.data.refresh_token);
+    }
     return reply.status(204).send();
   });
 

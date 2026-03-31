@@ -148,8 +148,22 @@ export async function clearLegalReview(id: string, operator: Operator, legalRevi
 export async function saveNotes(id: string, notes: string) {
   const lead = await prisma.lead.findUnique({ where: { id } });
   if (!lead) throw new AppError("Lead not found", 404);
-  await prisma.lead.update({ where: { id }, data: { notes } });
+  await prisma.lead.update({ where: { id }, data: { notes, updatedAt: new Date() } });
   return getLead(id);
+}
+
+export async function getTrackingEvents(leadId: string) {
+  const lead = await prisma.lead.findUnique({ where: { id: leadId } });
+  if (!lead) throw new AppError("Lead not found", 404);
+  const rows = await prisma.mailEvent.findMany({
+    where: { leadId },
+    orderBy: { timestamp: "desc" },
+  });
+  return rows.map((row) => ({
+    event: row.event,
+    timestamp: row.timestamp.toISOString(),
+    description: row.description,
+  }));
 }
 
 export async function listLetterQueue(filters: {

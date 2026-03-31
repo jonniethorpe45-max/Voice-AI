@@ -8,3 +8,9 @@ export const loginBodySchema = z.object({
 export const refreshBodySchema = z.object({
   refresh_token: z.string().min(1),
 });
+
+export const logoutBodySchema = z
+  .object({
+    refresh_token: z.string().min(1).optional(),
+  })
+  .optional();
