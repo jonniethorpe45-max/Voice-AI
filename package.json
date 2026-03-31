@@ -10,6 +10,8 @@
     "lint": "eslint . --ext .ts",
     "test": "vitest run",
     "test:watch": "vitest",
+    "contract:generate": "tsx scripts/generate-contract-report.ts",
+    "contract:check": "tsx scripts/check-contract-report.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",

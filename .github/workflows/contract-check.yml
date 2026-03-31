@@ -1,0 +1,31 @@
+name: contract-check
+
+on:
+  pull_request:
+  push:
+    branches: [ main, cursor/surplus-funds-backend-752f ]
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Validate contract artifact
+        run: npm run contract:check
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test

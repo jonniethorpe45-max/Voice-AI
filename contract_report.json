@@ -1,0 +1,1040 @@
+{
+  "artifact_version": "1.0.0",
+  "endpoints": [
+    {
+      "auth_required": false,
+      "domain": "auth",
+      "method": "POST",
+      "name": "login",
+      "path": "/v1/auth/login",
+      "request_schema": {
+        "email": {
+          "required": true,
+          "type": "string"
+        },
+        "password": {
+          "required": true,
+          "type": "string"
+        }
+      },
+      "response_schema": {
+        "access_token": {
+          "required": true,
+          "type": "string"
+        },
+        "email": {
+          "required": true,
+          "type": "string"
+        },
+        "expires_at": {
+          "format": "iso8601",
+          "required": true,
+          "type": "string"
+        },
+        "id": {
+          "required": true,
+          "type": "string"
+        },
+        "name": {
+          "required": true,
+          "type": "string"
+        },
+        "refresh_token": {
+          "required": true,
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "admin",
+            "reviewer"
+          ],
+          "required": true,
+          "type": "string"
+        }
+      },
+      "router_source": "src/modules/auth/auth.router.ts:8-11",
+      "serializer_source": "src/modules/auth/auth.service.ts:34-43"
+    },
+    {
+      "auth_required": true,
+      "domain": "auth",
+      "method": "POST",
+      "name": "logout",
+      "path": "/v1/auth/logout",
+      "request_schema": {
+        "refresh_token": {
+          "required": false,
+          "type": "string"
+        }
+      },
+      "response_schema": {
+        "status_code": 204
+      },
+      "router_source": "src/modules/auth/auth.router.ts:13-20",
+      "serializer_source": "src/modules/auth/auth.service.ts:46-54"
+    },
+    {
+      "auth_required": false,
+      "domain": "auth",
+      "method": "POST",
+      "name": "refresh",
+      "path": "/v1/auth/refresh",
+      "request_schema": {
+        "refresh_token": {
+          "required": true,
+          "type": "string"
+        }
+      },
+      "response_schema": {
+        "access_token": {
+          "required": true,
+          "type": "string"
+        },
+        "expires_at": {
+          "format": "iso8601",
+          "required": true,
+          "type": "string"
+        }
+      },
+      "router_source": "src/modules/auth/auth.router.ts:22-25",
+      "serializer_source": "src/modules/auth/auth.service.ts:56-62"
+    },
+    {
+      "auth_required": true,
+      "domain": "leads",
+      "method": "GET",
+      "name": "list",
+      "path": "/v1/leads",
+      "request_schema": {
+        "query": {
+          "county": {
+            "required": false,
+            "type": "string"
+          },
+          "page": {
+            "default": 1,
+            "required": true,
+            "type": "integer"
+          },
+          "page_size": {
+            "default": 50,
+            "max": 200,
+            "required": true,
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "CA",
+              "FL"
+            ],
+            "required": false,
+            "type": "string"
+          },
+          "status": {
+            "required": false,
+            "type": "string"
+          }
+        }
+      },
+      "response_schema": {
+        "items": "Lead",
+        "type": "array"
+      },
+      "router_source": "src/modules/leads/leads.router.ts:8-11",
+      "serializer_source": "src/shared/utils/leadSerializer.ts:15-55"
+    },
+    {
+      "auth_required": true,
+      "domain": "leads",
+      "method": "GET",
+      "name": "detail",
+      "path": "/v1/leads/:id",
+      "request_schema": {
+        "params": {
+          "id": {
+            "required": true,
+            "type": "string"
+          }
+        }
+      },
+      "response_schema": {
+        "type": "Lead"
+      },
+      "router_source": "src/modules/leads/leads.router.ts:13-16",
+      "serializer_source": "src/shared/utils/leadSerializer.ts:15-55"
+    },
+    {
+      "auth_required": true,
+      "domain": "letters",
+      "method": "GET",
+      "name": "queue",
+      "path": "/v1/letters/queue",
+      "request_schema": {
+        "query": {
+          "county": {
+            "required": false,
+            "type": "string"
+          },
+          "page": {
+            "default": 1,
+            "required": false,
+            "type": "integer"
+          },
+          "page_size": {
+            "default": 50,
+            "max": 200,
+            "required": false,
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "CA",
+              "FL"
+            ],
+            "required": false,
+            "type": "string"
+          },
+          "status": {
+            "required": false,
+            "type": "string"
+          }
+        }
+      },
+      "response_schema": {
+        "items": "Lead",
+        "type": "array"
+      },
+      "router_source": "src/modules/letters/letters.router.ts:18-22",
+      "serializer_source": "src/shared/utils/leadSerializer.ts:15-55"
+    },
+    {
+      "auth_required": true,
+      "domain": "leads",
+      "method": "POST",
+      "name": "approve",
+      "path": "/v1/leads/:id/approve",
+      "request_schema": {
+        "body": {},
+        "params": {
+          "id": {
+            "required": true,
+            "type": "string"
+          }
+        }
+      },
+      "response_schema": {
+        "type": "Lead"
+      },
+      "router_source": "src/modules/leads/leads.router.ts:18-21",
+      "serializer_source": "src/modules/leads/leads.service.ts:68-90"
+    },
+    {
+      "auth_required": true,
+      "domain": "leads",
+      "method": "POST",
+      "name": "reject",
+      "path": "/v1/leads/:id/reject",
+      "request_schema": {
+        "body": {
+          "reason": {
+            "required": false,
+            "type": "string"
+          }
+        },
+        "params": {
+          "id": {
+            "required": true,
+            "type": "string"
+          }
+        }
+      },
+      "response_schema": {
+        "type": "Lead"
+      },
+      "router_source": "src/modules/leads/leads.router.ts:23-27",
+      "serializer_source": "src/modules/leads/leads.service.ts:92-112"
+    },
+    {
+      "auth_required": true,
+      "domain": "leads",
+      "method": "POST",
+      "name": "hold",
+      "path": "/v1/leads/:id/hold",
+      "request_schema": {
+        "body": {
+          "reason": {
+            "required": false,
+            "type": "string"
+          }
+        },
+        "params": {
+          "id": {
+            "required": true,
+            "type": "string"
+          }
+        }
+      },
+      "response_schema": {
+        "type": "Lead"
+      },
+      "router_source": "src/modules/leads/leads.router.ts:29-33",
+      "serializer_source": "src/modules/leads/leads.service.ts:114-131"
+    },
+    {
+      "auth_required": true,
+      "domain": "leads",
+      "method": "POST",
+      "name": "clear_legal_review",
+      "path": "/v1/leads/:id/clear-legal-review",
+      "request_schema": {
+        "body": {
+          "legal_review_cleared": {
+            "default": true,
+            "required": false,
+            "type": "boolean"
+          }
+        },
+        "params": {
+          "id": {
+            "required": true,
+            "type": "string"
+          }
+        }
+      },
+      "response_schema": {
+        "type": "Lead"
+      },
+      "router_source": "src/modules/leads/leads.router.ts:35-40",
+      "serializer_source": "src/modules/leads/leads.service.ts:133-146"
+    },
+    {
+      "auth_required": true,
+      "domain": "leads",
+      "method": "POST",
+      "name": "notes",
+      "path": "/v1/leads/:id/notes",
+      "request_schema": {
+        "body": {
+          "notes": {
+            "required": true,
+            "type": "string"
+          }
+        },
+        "params": {
+          "id": {
+            "required": true,
+            "type": "string"
+          }
+        }
+      },
+      "response_schema": {
+        "type": "Lead"
+      },
+      "router_source": "src/modules/leads/leads.router.ts:42-46",
+      "serializer_source": "src/modules/leads/leads.service.ts:148-153"
+    },
+    {
+      "auth_required": true,
+      "domain": "dashboard",
+      "method": "GET",
+      "name": "stats",
+      "path": "/v1/dashboard/stats",
+      "request_schema": {},
+      "response_schema": {
+        "average_surplus_amount": "double",
+        "flagged_legal_review": "int",
+        "generated_at": "iso8601",
+        "leads_by_state": "map",
+        "leads_by_status": "map",
+        "letters_delivered": "int",
+        "letters_returned": "int",
+        "letters_sent": "int",
+        "pending_approval": "int",
+        "total_leads": "int",
+        "total_surplus_amount": "double"
+      },
+      "router_source": "src/modules/dashboard/dashboard.router.ts:6-10",
+      "serializer_source": "src/modules/dashboard/dashboard.service.ts:11-67"
+    },
+    {
+      "auth_required": true,
+      "domain": "notifications",
+      "method": "GET",
+      "name": "list",
+      "path": "/v1/notifications",
+      "request_schema": {},
+      "response_schema": {
+        "items": "NotificationEvent",
+        "type": "array"
+      },
+      "router_source": "src/modules/notifications/notifications.router.ts:9-12",
+      "serializer_source": "src/modules/notifications/notifications.service.ts:7-21"
+    },
+    {
+      "auth_required": true,
+      "domain": "notifications",
+      "method": "POST",
+      "name": "read",
+      "path": "/v1/notifications/:id/read",
+      "request_schema": {
+        "params": {
+          "id": {
+            "required": true,
+            "type": "uuid"
+          }
+        }
+      },
+      "response_schema": {
+        "status_code": 204
+      },
+      "router_source": "src/modules/notifications/notifications.router.ts:14-18",
+      "serializer_source": "src/modules/notifications/notifications.service.ts:23-25"
+    },
+    {
+      "auth_required": true,
+      "domain": "notifications",
+      "method": "POST",
+      "name": "read_all",
+      "path": "/v1/notifications/read-all",
+      "request_schema": {},
+      "response_schema": {
+        "status_code": 204
+      },
+      "router_source": "src/modules/notifications/notifications.router.ts:20-23",
+      "serializer_source": "src/modules/notifications/notifications.service.ts:27-29"
+    },
+    {
+      "auth_required": true,
+      "domain": "tracking",
+      "method": "GET",
+      "name": "list",
+      "path": "/v1/tracking",
+      "request_schema": {},
+      "response_schema": {
+        "items": {
+          "description": "string|null",
+          "event": "string",
+          "id": "string",
+          "lead_id": "string",
+          "timestamp": "iso8601"
+        },
+        "type": "array"
+      },
+      "router_source": "src/modules/tracking/tracking.router.ts:41-47",
+      "serializer_source": "src/modules/tracking/tracking.router.ts:9-23"
+    },
+    {
+      "auth_required": true,
+      "domain": "tracking",
+      "method": "GET",
+      "name": "detail",
+      "path": "/v1/tracking/:id",
+      "request_schema": {
+        "params": {
+          "id": {
+            "required": true,
+            "type": "string"
+          }
+        }
+      },
+      "response_schema": {
+        "description": "string|null",
+        "event": "string",
+        "id": "string",
+        "lead_id": "string",
+        "timestamp": "iso8601"
+      },
+      "router_source": "src/modules/tracking/tracking.router.ts:49-54",
+      "serializer_source": "src/modules/tracking/tracking.router.ts:9-23"
+    }
+  ],
+  "enum_reference_tables": {
+    "assignment_confidence": {
+      "backend_source": "src/shared/utils/leadSerializer.ts:37",
+      "flutter_usage": "double? assignmentConfidence",
+      "type": "number|null",
+      "value_range": "0.0 to 1.0 expected"
+    },
+    "lead_status": {
+      "backend_source": "src/shared/utils/statusMappings.ts:3-27",
+      "flutter_enum": "LeadStatus",
+      "mapping": {
+        "ADDRESS_VERIFIED": "addressVerified",
+        "APPROVED": "approved",
+        "DELIVERED": "delivered",
+        "FAILED": "failed",
+        "IMPORTED": "imported",
+        "LETTER_GENERATED": "letterGenerated",
+        "ON_HOLD": "onHold",
+        "PENDING_APPROVAL": "pendingApproval",
+        "RETURNED": "returned",
+        "SENT": "sent"
+      }
+    },
+    "lob_verification_status": {
+      "backend_source": "src/shared/utils/statusMappings.ts:29-36",
+      "flutter_enum": "LobVerificationStatus",
+      "mapping": {
+        "CORRECTED": "corrected",
+        "FAILED": "failed",
+        "NOT_STARTED": "notStarted",
+        "PENDING": "pending",
+        "UNDELIVERABLE": "undeliverable",
+        "VERIFIED": "verified"
+      }
+    },
+    "mail_tracking_status": {
+      "allowed_values": [
+        "submitted",
+        "mailed",
+        "delivered",
+        "returned",
+        "in_transit"
+      ],
+      "backend_source": "src/shared/utils/leadSerializer.ts:43-47, src/modules/tracking/tracking.router.ts:16-22",
+      "flutter_usage": "MailEvent.event string"
+    },
+    "notification_types": {
+      "backend_source": "src/shared/utils/statusMappings.ts:38-44",
+      "flutter_enum": "NotificationEventType",
+      "mapping": {
+        "APPROVAL_COMPLETED": "approvalCompleted",
+        "LEGAL_REVIEW_REQUIRED": "legalReviewRequired",
+        "LETTER_RETURNED": "letterReturned",
+        "NEW_LEAD_READY": "newLeadReady",
+        "RECIPIENT_RESPONDED": "recipientResponded"
+      }
+    },
+    "state_county_identifiers": {
+      "backend_source": "prisma/schema.prisma:67-69 and lead serializer/router filters",
+      "flutter_source": "SourceState.abbr and supported county constants in lead.dart",
+      "states": [
+        "CA",
+        "FL"
+      ],
+      "supported_counties_phase1": {
+        "CA": [
+          "Los Angeles",
+          "Orange",
+          "El Dorado",
+          "Tulare"
+        ],
+        "FL": [
+          "Lee",
+          "Brevard"
+        ]
+      }
+    }
+  },
+  "flutter_models": [
+    {
+      "fields": [
+        {
+          "backend_response_key": "id",
+          "backend_source": "src/modules/auth/auth.service.ts:36",
+          "expected_type": "String",
+          "field_name": "id",
+          "notes": "direct",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "email",
+          "backend_source": "src/modules/auth/auth.service.ts:37",
+          "expected_type": "String",
+          "field_name": "email",
+          "notes": "direct",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "name",
+          "backend_source": "src/modules/auth/auth.service.ts:38",
+          "expected_type": "String",
+          "field_name": "name",
+          "notes": "direct",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "role",
+          "backend_source": "src/modules/auth/auth.service.ts:39",
+          "expected_type": "String",
+          "field_name": "role",
+          "notes": "enum mapped to admin|reviewer",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "access_token",
+          "backend_source": "src/modules/auth/auth.service.ts:40",
+          "expected_type": "String",
+          "field_name": "accessToken",
+          "notes": "jwt string",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "refresh_token",
+          "backend_source": "src/modules/auth/auth.service.ts:41",
+          "expected_type": "String",
+          "field_name": "refreshToken",
+          "notes": "uuid string",
+          "nullable": true
+        },
+        {
+          "backend_response_key": "expires_at",
+          "backend_source": "src/modules/auth/auth.service.ts:42",
+          "expected_type": "DateTime",
+          "field_name": "expiresAt",
+          "notes": "ISO8601",
+          "nullable": false
+        }
+      ],
+      "flutter_file": "lib/models/auth_user.dart",
+      "model": "AuthUser"
+    },
+    {
+      "fields": [
+        {
+          "backend_response_key": "total_leads",
+          "backend_source": "src/modules/dashboard/dashboard.service.ts:52",
+          "expected_type": "int",
+          "field_name": "totalLeads",
+          "notes": "num->int in flutter",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "pending_approval",
+          "backend_source": "src/modules/dashboard/dashboard.service.ts:53",
+          "expected_type": "int",
+          "field_name": "pendingApproval",
+          "notes": "num->int",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "flagged_legal_review",
+          "backend_source": "src/modules/dashboard/dashboard.service.ts:54",
+          "expected_type": "int",
+          "field_name": "flaggedLegalReview",
+          "notes": "num->int",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "letters_sent",
+          "backend_source": "src/modules/dashboard/dashboard.service.ts:55",
+          "expected_type": "int",
+          "field_name": "lettersSent",
+          "notes": "num->int",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "letters_delivered",
+          "backend_source": "src/modules/dashboard/dashboard.service.ts:56",
+          "expected_type": "int",
+          "field_name": "lettersDelivered",
+          "notes": "num->int",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "letters_returned",
+          "backend_source": "src/modules/dashboard/dashboard.service.ts:57",
+          "expected_type": "int",
+          "field_name": "lettersReturned",
+          "notes": "num->int",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "total_surplus_amount",
+          "backend_source": "src/modules/dashboard/dashboard.service.ts:58",
+          "expected_type": "double",
+          "field_name": "totalSurplusAmount",
+          "notes": "num->double",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "average_surplus_amount",
+          "backend_source": "src/modules/dashboard/dashboard.service.ts:59",
+          "expected_type": "double",
+          "field_name": "averageSurplusAmount",
+          "notes": "num->double",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "leads_by_state",
+          "backend_source": "src/modules/dashboard/dashboard.service.ts:27-33,60",
+          "expected_type": "Map<String,StateStats>",
+          "field_name": "leadsByState",
+          "notes": "contains count,total_surplus",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "leads_by_status",
+          "backend_source": "src/modules/dashboard/dashboard.service.ts:35-49,61",
+          "expected_type": "Map<String,int>",
+          "field_name": "leadsByStatus",
+          "notes": "keys must match LeadStatus.name values",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "generated_at",
+          "backend_source": "src/modules/dashboard/dashboard.service.ts:62",
+          "expected_type": "DateTime",
+          "field_name": "generatedAt",
+          "notes": "ISO8601",
+          "nullable": false
+        }
+      ],
+      "flutter_file": "lib/models/dashboard_stats.dart",
+      "model": "DashboardStats"
+    },
+    {
+      "fields": [
+        {
+          "backend_response_key": "id",
+          "backend_source": "src/modules/notifications/notifications.service.ts:13",
+          "expected_type": "String",
+          "field_name": "id",
+          "notes": "direct",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "type",
+          "backend_source": "src/modules/notifications/notifications.service.ts:14",
+          "expected_type": "String(enum name)",
+          "field_name": "type",
+          "notes": "must equal NotificationEventType.name",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "lead_id",
+          "backend_source": "src/modules/notifications/notifications.service.ts:15",
+          "expected_type": "String",
+          "field_name": "leadId",
+          "notes": "direct",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "lead_owner_name",
+          "backend_source": "src/modules/notifications/notifications.service.ts:16",
+          "expected_type": "String",
+          "field_name": "leadOwnerName",
+          "notes": "nullable",
+          "nullable": true
+        },
+        {
+          "backend_response_key": "message",
+          "backend_source": "src/modules/notifications/notifications.service.ts:17",
+          "expected_type": "String",
+          "field_name": "message",
+          "notes": "nullable",
+          "nullable": true
+        },
+        {
+          "backend_response_key": "created_at",
+          "backend_source": "src/modules/notifications/notifications.service.ts:18",
+          "expected_type": "DateTime",
+          "field_name": "createdAt",
+          "notes": "ISO8601",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "is_read",
+          "backend_source": "src/modules/notifications/notifications.service.ts:19",
+          "expected_type": "bool",
+          "field_name": "isRead",
+          "notes": "default false in flutter",
+          "nullable": false
+        }
+      ],
+      "flutter_file": "lib/models/notification_event.dart",
+      "model": "NotificationEvent"
+    },
+    {
+      "fields": [
+        {
+          "backend_response_key": "id",
+          "backend_source": "src/shared/utils/leadSerializer.ts:17",
+          "expected_type": "String",
+          "field_name": "id",
+          "notes": "direct",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "parcel_number",
+          "backend_source": "src/shared/utils/leadSerializer.ts:18",
+          "expected_type": "String",
+          "field_name": "parcelNumber",
+          "notes": "flutter fallback parcel_id supported",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "owner_name",
+          "backend_source": "src/shared/utils/leadSerializer.ts:19",
+          "expected_type": "String",
+          "field_name": "ownerName",
+          "notes": "direct",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "owner_phone",
+          "backend_source": "src/shared/utils/leadSerializer.ts:20",
+          "expected_type": "String",
+          "field_name": "ownerPhone",
+          "notes": "nullable",
+          "nullable": true
+        },
+        {
+          "backend_response_key": "owner_email",
+          "backend_source": "src/shared/utils/leadSerializer.ts:21",
+          "expected_type": "String",
+          "field_name": "ownerEmail",
+          "notes": "nullable",
+          "nullable": true
+        },
+        {
+          "backend_response_key": "property_address",
+          "backend_source": "src/shared/utils/leadSerializer.ts:22",
+          "expected_type": "String",
+          "field_name": "propertyAddress",
+          "notes": "direct",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "mailing_address",
+          "backend_source": "src/shared/utils/leadSerializer.ts:23",
+          "expected_type": "String",
+          "field_name": "mailingAddress",
+          "notes": "direct",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "city",
+          "backend_source": "src/shared/utils/leadSerializer.ts:24",
+          "expected_type": "String",
+          "field_name": "city",
+          "notes": "direct",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "county",
+          "backend_source": "src/shared/utils/leadSerializer.ts:25",
+          "expected_type": "String",
+          "field_name": "county",
+          "notes": "direct",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "state",
+          "backend_source": "src/shared/utils/leadSerializer.ts:26",
+          "expected_type": "String(CA|FL)",
+          "field_name": "state",
+          "notes": "abbr expected by flutter",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "zip",
+          "backend_source": "src/shared/utils/leadSerializer.ts:27",
+          "expected_type": "String",
+          "field_name": "zip",
+          "notes": "direct",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "surplus_amount",
+          "backend_source": "src/shared/utils/leadSerializer.ts:28",
+          "expected_type": "double",
+          "field_name": "surplusAmount",
+          "notes": "numeric conversion",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "sale_date",
+          "backend_source": "src/shared/utils/leadSerializer.ts:29",
+          "expected_type": "DateTime",
+          "field_name": "saleDate",
+          "notes": "ISO8601",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "status",
+          "backend_source": "src/shared/utils/leadSerializer.ts:30",
+          "expected_type": "String(enum name)",
+          "field_name": "status",
+          "notes": "must match LeadStatus.name",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "lob_verification_status",
+          "backend_source": "src/shared/utils/leadSerializer.ts:31",
+          "expected_type": "String(enum name)",
+          "field_name": "lobVerificationStatus",
+          "notes": "must match LobVerificationStatus.name",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "lob_address_id",
+          "backend_source": "src/shared/utils/leadSerializer.ts:32",
+          "expected_type": "String",
+          "field_name": "lobAddressId",
+          "notes": "nullable",
+          "nullable": true
+        },
+        {
+          "backend_response_key": "lob_letter_id",
+          "backend_source": "src/shared/utils/leadSerializer.ts:33",
+          "expected_type": "String",
+          "field_name": "lobLetterId",
+          "notes": "nullable",
+          "nullable": true
+        },
+        {
+          "backend_response_key": "mail_events",
+          "backend_source": "src/shared/utils/leadSerializer.ts:43-47",
+          "expected_type": "MailEvent[]",
+          "field_name": "mailEvents",
+          "notes": "defaults [] in flutter",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "manual_review_required",
+          "backend_source": "src/shared/utils/leadSerializer.ts:34",
+          "expected_type": "bool",
+          "field_name": "manualReviewRequired",
+          "notes": "default false in flutter",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "legal_review_cleared",
+          "backend_source": "src/shared/utils/leadSerializer.ts:35",
+          "expected_type": "bool",
+          "field_name": "legalReviewCleared",
+          "notes": "default false",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "flagged_for_legal_review",
+          "backend_source": "src/shared/utils/leadSerializer.ts:36",
+          "expected_type": "bool",
+          "field_name": "flaggedForLegalReview",
+          "notes": "default false",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "assignment_confidence",
+          "backend_source": "src/shared/utils/leadSerializer.ts:37",
+          "expected_type": "double",
+          "field_name": "assignmentConfidence",
+          "notes": "num?->double?",
+          "nullable": true
+        },
+        {
+          "backend_response_key": "data_source",
+          "backend_source": "src/shared/utils/leadSerializer.ts:38",
+          "expected_type": "String",
+          "field_name": "dataSource",
+          "notes": "flutter fallback '' if missing",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "source_url",
+          "backend_source": "src/shared/utils/leadSerializer.ts:39",
+          "expected_type": "String",
+          "field_name": "sourceUrl",
+          "notes": "nullable",
+          "nullable": true
+        },
+        {
+          "backend_response_key": "activity_log",
+          "backend_source": "src/shared/utils/leadSerializer.ts:48-53",
+          "expected_type": "ActivityEntry[]",
+          "field_name": "activityLog",
+          "notes": "defaults []",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "notes",
+          "backend_source": "src/shared/utils/leadSerializer.ts:40",
+          "expected_type": "String",
+          "field_name": "notes",
+          "notes": "nullable",
+          "nullable": true
+        },
+        {
+          "backend_response_key": "created_at",
+          "backend_source": "src/shared/utils/leadSerializer.ts:41",
+          "expected_type": "DateTime",
+          "field_name": "createdAt",
+          "notes": "flutter fallback imported_at/now",
+          "nullable": false
+        },
+        {
+          "backend_response_key": "updated_at",
+          "backend_source": "src/shared/utils/leadSerializer.ts:42",
+          "expected_type": "DateTime",
+          "field_name": "updatedAt",
+          "notes": "required by flutter parse",
+          "nullable": false
+        }
+      ],
+      "flutter_file": "lib/models/lead.dart",
+      "model": "Lead"
+    }
+  ],
+  "generated_at_utc": "STATIC_FOR_DETERMINISM",
+  "source_of_truth": {
+    "backend_files": [
+      "src/modules/auth/auth.router.ts",
+      "src/modules/auth/auth.service.ts",
+      "src/modules/auth/auth.schema.ts",
+      "src/modules/leads/leads.router.ts",
+      "src/modules/leads/leads.service.ts",
+      "src/modules/leads/leads.schema.ts",
+      "src/shared/utils/leadSerializer.ts",
+      "src/modules/dashboard/dashboard.router.ts",
+      "src/modules/dashboard/dashboard.service.ts",
+      "src/modules/notifications/notifications.router.ts",
+      "src/modules/notifications/notifications.service.ts",
+      "src/modules/tracking/tracking.router.ts",
+      "src/modules/letters/letters.router.ts"
+    ],
+    "flutter_files": [
+      "lib/models/lead.dart",
+      "lib/models/dashboard_stats.dart",
+      "lib/models/auth_user.dart",
+      "lib/models/notification_event.dart",
+      "lib/services/api_service.dart"
+    ]
+  },
+  "validation_summary": {
+    "assumptions_made": [
+      "Letters queue uses Lead schema because Flutter parses with Lead.fromJson",
+      "Mail tracking model in flutter uses event/timestamp/description pattern from lead.dart MailEvent"
+    ],
+    "fields_fully_matched": [
+      "AuthUser fields",
+      "Lead core + nested MailEvent/ActivityEntry fields",
+      "DashboardStats fields",
+      "NotificationEvent fields",
+      "Lead/query endpoint signatures used by ApiService"
+    ],
+    "fields_transformed": [
+      "Lead.status DB enum -> Flutter LeadStatus.name",
+      "Lead.lob_verification_status DB enum -> Flutter LobVerificationStatus.name",
+      "Notification.type DB enum -> Flutter NotificationEventType.name",
+      "Decimal surplusAmount -> numeric",
+      "Date fields -> ISO8601 strings"
+    ],
+    "optional_fields": [
+      "owner_phone",
+      "owner_email",
+      "lob_address_id",
+      "lob_letter_id",
+      "assignment_confidence",
+      "source_url",
+      "notes",
+      "lead_owner_name",
+      "message",
+      "description"
+    ],
+    "remaining_risks": [
+      "No parser-time runtime validation script against real Flutter repo; contract report currently source-mapped manually",
+      "If Flutter adds new fromJson fields, regen/check must be rerun"
+    ]
+  }
+}
