@@ -13,25 +13,62 @@ Production-ready REST API backend for the Flutter Tax Deeds admin app.
 - Vitest tests
 - Docker + docker-compose
 
-## One-command local startup
+## Startup modes
+
+### Full stack with Docker (app + postgres + redis)
 
 ```bash
-cp .env.example .env && docker compose up --build
+cp .env.example .env
+docker compose up --build -d
 ```
 
-API: `http://localhost:3000/v1`
+In this mode, do **not** run `npm run dev` on host unless you intentionally want a second API process.
 
-Android emulator base URL: `http://10.0.2.2:3000/v1`
+API base URL:
+- `http://localhost:3000/v1`
 
-## Local setup without Docker
+Health endpoint:
+- `http://localhost:3000/health`
+- response:
+```json
+{ "status": "ok", "service": "tax-deeds-backend" }
+```
+
+### Dependencies only (postgres + redis), API on host
 
 ```bash
+docker compose up -d postgres redis
+cp .env.example .env
 npm install
 npm run prisma:generate
-npm run prisma:migrate
+npm run prisma:deploy
 npm run seed
 npm run dev
 ```
+
+In this mode, `npm run dev` is required.
+
+## Seeded local credentials
+
+- Admin: `admin@taxdeeds.local` / `Admin1234!`
+- Reviewer: `reviewer@taxdeeds.local` / `Review1234!`
+
+## Flutter base URL
+
+- Android emulator: `http://10.0.2.2:3000/v1`
+- iOS simulator/Web: `http://localhost:3000/v1`
+
+Set `useMockData = false` for live backend testing.
+
+## Contract tooling
+
+```bash
+npm run contract:generate
+npm run contract:check
+```
+
+- `contract_report.json` is deterministic and CI-validated.
+- CI workflow: `.github/workflows/contract-check.yml`
 
 ## Key endpoints
 
@@ -45,8 +82,11 @@ npm run dev
 - `POST /v1/leads/:id/hold`
 - `POST /v1/leads/:id/clear-legal-review`
 - `POST /v1/leads/:id/notes`
+- `GET /v1/letters/queue`
 - `GET /v1/dashboard/stats`
 - `GET /v1/notifications`
 - `POST /v1/notifications/:id/read`
 - `POST /v1/notifications/read-all`
+- `GET /v1/tracking`
+- `GET /v1/tracking/:id`
 - `POST /v1/webhooks/lob`

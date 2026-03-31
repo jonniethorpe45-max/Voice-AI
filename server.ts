@@ -21,6 +21,7 @@ export function buildServer() {
   app.register(rateLimit, { max: env.RATE_LIMIT_MAX, timeWindow: env.RATE_LIMIT_WINDOW_MS });
   app.setErrorHandler(errorHandler);
   app.get("/health", async () => ({ status: "ok" }));
+  app.get(`${APP.apiPrefix}/health`, async () => ({ status: "ok" }));
 
   app.register(authRouter, { prefix: APP.apiPrefix });
   app.register(leadsRouter, { prefix: APP.apiPrefix });
