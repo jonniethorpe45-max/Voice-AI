@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  name          String
+  role          Role           @default(ADMIN)
+  passwordHash  String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  refreshTokens RefreshToken[]
+  activityLogs  ActivityLog[]
+}
+
+enum Role { ADMIN REVIEWER }
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Lead {
+  id                    String                @id @default(uuid())
+  parcelNumber          String
+  ownerName             String
+  ownerPhone            String?
+  ownerEmail            String?
+  propertyAddress       String
+  mailingAddress        String
+  city                  String
+  county                String
+  state                 StateAbbr
+  zip                   String
+  surplusAmount         Decimal               @db.Decimal(12,2)
+  saleDate              DateTime
+  status                LeadStatus            @default(IMPORTED)
+  lobVerificationStatus LobVerificationStatus @default(NOT_STARTED)
+  lobAddressId          String?
+  lobLetterId           String?
+  manualReviewRequired  Boolean               @default(false)
+  legalReviewCleared    Boolean               @default(false)
+  flaggedForLegalReview Boolean               @default(false)
+  assignmentConfidence  Float?
+  dataSource            String
+  sourceUrl             String?
+  notes                 String?
+  rejectionReason       String?
+  sourceSnapshot        Json?
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  mailEvents            MailEvent[]
+  activityLogs          ActivityLog[]
+  notifications         NotificationEvent[]
+}
+
+enum StateAbbr { CA FL }
+enum LeadStatus { IMPORTED ADDRESS_VERIFIED LETTER_GENERATED PENDING_APPROVAL ON_HOLD APPROVED SENT DELIVERED RETURNED FAILED }
+enum LobVerificationStatus { NOT_STARTED PENDING VERIFIED CORRECTED UNDELIVERABLE FAILED }
+
+model MailEvent {
+  id          String   @id @default(uuid())
+  leadId      String
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  event       String
+  description String?
+  rawPayload  Json?
+  timestamp   DateTime
+  createdAt   DateTime @default(now())
+}
+
+model ActivityLog {
+  id           String   @id @default(uuid())
+  leadId       String
+  lead         Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  action       String
+  operatorId   String?
+  operator     User?    @relation(fields: [operatorId], references: [id])
+  operatorName String?
+  note         String?
+  timestamp    DateTime @default(now())
+}
+
+model NotificationEvent {
+  id             String                @id @default(uuid())
+  type           NotificationEventType
+  leadId         String
+  lead           Lead                  @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadOwnerName  String?
+  message        String?
+  isRead         Boolean               @default(false)
+  createdAt      DateTime              @default(now())
+}
+
+enum NotificationEventType {
+  NEW_LEAD_READY
+  LETTER_RETURNED
+  RECIPIENT_RESPONDED
+  LEGAL_REVIEW_REQUIRED
+  APPROVAL_COMPLETED
+}
+
+model IngestionRun {
+  id          String   @id @default(uuid())
+  county      String
+  state       StateAbbr
+  status      String
+  leadsFound  Int      @default(0)
+  leadsAdded  Int      @default(0)
+  error       String?
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+}
